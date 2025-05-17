@@ -1,4 +1,4 @@
-import MentaroNavbar from "./components/Mentaronavbar.jsx"
+import MentaroNavbar from "./../components/Mentaronavbar.jsx"
 
 function  Homepage(){
   return (

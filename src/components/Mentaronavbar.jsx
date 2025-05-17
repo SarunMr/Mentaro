@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Search, ShoppingCart } from "lucide-react";
+import mentaroLogo from "./../assets/images/mentarologo.png"
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,7 +20,7 @@ const Navbar = () => {
       {/* Logo */}
       <div className="flex items-center">
         <img
-          src="/images/mentarologo.png"
+          src={mentaroLogo}
           alt="Menataro Logo"
           className="h-10 w-auto"
         />
