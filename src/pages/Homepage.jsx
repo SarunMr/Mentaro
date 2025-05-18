@@ -1,14 +1,15 @@
 import MentaroNavbar from "./../components/Mentaronavbar.jsx"
 import MentaroFooter from "./../components/Mentarofooter.jsx"
+import MentaroHero from "./../components/Mentaroherosection.jsx"
 
-function  Homepage(){
+export default function  Homepage(){
   return (
     <div>
     <MentaroNavbar/>
+    <MentaroHero/>
     <MentaroFooter/>
     </div>
   );
 }
   
 
-export default Homepage

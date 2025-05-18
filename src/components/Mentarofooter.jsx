@@ -1,5 +1,5 @@
 import { FaTwitter, FaInstagram, FaFacebookF } from "react-icons/fa";
-import mentaroLogo from "./../assets/images/mentarologwhitetext.png"
+import mentaroLogo from "./../assets/images/mentarologowhitetext.png"
 
 export default function Footer() {
   return (
