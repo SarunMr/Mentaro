@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { Search, ShoppingCart } from "lucide-react";
-import mentaroLogo from "./../assets/images/mentarologo.png"
+import mentaroLogo from "./../assets/images/mentarologo.png";
+import LoginPage from "../pages/Loginpage_signup.jsx"; 
 
-const Navbar = () => {
+const MentaroNavbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -12,64 +15,74 @@ const Navbar = () => {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     console.log("Searching for:", searchQuery);
-    // Implement your search functionality here
+  };
+
+  const openLogin = () => {
+    setShowSignup(false);
+    setShowAuthModal(true);
+  };
+
+  const openSignup = () => {
+    setShowSignup(true);
+    setShowAuthModal(true);
   };
 
   return (
-    <nav className="flex items-center justify-between px-4 py-2 bg-white border-b border-gray-200">
-      {/* Logo */}
-      <div className="flex items-center">
-        <img
-          src={mentaroLogo}
-          alt="Menataro Logo"
-          className="h-10 w-auto"
-        />
-      </div>
+    <>
+      <nav className="bg-white shadow-md py-4 px-6 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center">
+          <img src={mentaroLogo} alt="Mentaro Logo" className="h-10" />
+        </div>
 
-      {/* Search Bar */}
-      <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md mx-4">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search for course"
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="w-full py-1 px-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
+        {/* Search Bar */}
+        <form onSubmit={handleSearchSubmit} className="flex-1 mx-8">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search for courses..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="w-full py-2 px-4 pr-10 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              <Search size={20} />
+            </button>
+          </div>
+        </form>
+
+        {/* Navigation Items */}
+        <div className="flex items-center space-x-6">
+          <a href="#" className="text-gray-700 hover:text-blue-600">
+            Become Instructor
+          </a>
           <button
-            type="submit"
-            className="absolute right-0 top-0 bottom-0 px-3 flex items-center"
-            aria-label="Search"
+            onClick={openLogin}
+            className="text-gray-700 hover:text-blue-600"
           >
-            <Search size={18} className="text-gray-500" />
+            Login
+          </button>
+          <button
+            onClick={openSignup}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            Sign Up
           </button>
         </div>
-      </form>
+      </nav>
 
-      {/* Navigation Items */}
-      <div className="flex items-center space-x-4">
-        <a href="#" className="text-gray-700 hover:text-blue-600">
-          Become Instructor
-        </a>
-        <a href="#" className="text-gray-700">
-          <ShoppingCart size={20} />
-        </a>
-        <a
-          href="#"
-          className="px-4 py-1 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-        >
-          Login
-        </a>
-        <a
-          href="#"
-          className="px-4 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-        >
-          Sign Up
-        </a>
-      </div>
-    </nav>
+      {showAuthModal && (
+        <LoginPage
+          onClose={() => setShowAuthModal(false)}
+          showSignup={showSignup}
+          switchToSignup={() => setShowSignup(!showSignup)}
+        />
+      )}
+    </>
   );
 };
 
-
-export default Navbar;
+export default MentaroNavbar;
