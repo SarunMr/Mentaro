@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { Search, ShoppingCart } from "lucide-react";
+import { Search } from "lucide-react";
 import mentaroLogo from "./../assets/images/mentarologo.png";
-import LoginPage from "../pages/Loginpage_signup.jsx"; 
+import LoginPage from "../pages/LoginPage";    // Adjust path if needed
+import SignupPage from "../pages/SignupPage";  // Adjust path if needed
 
 const MentaroNavbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,10 +60,7 @@ const MentaroNavbar = () => {
           <a href="#" className="text-gray-700 hover:text-blue-600">
             Become Instructor
           </a>
-          <button
-            onClick={openLogin}
-            className="text-gray-700 hover:text-blue-600"
-          >
+          <button onClick={openLogin} className="text-gray-700 hover:text-blue-600">
             Login
           </button>
           <button
@@ -74,12 +72,19 @@ const MentaroNavbar = () => {
         </div>
       </nav>
 
+      {/* Conditionally render LoginPage or SignupPage */}
       {showAuthModal && (
-        <LoginPage
-          onClose={() => setShowAuthModal(false)}
-          showSignup={showSignup}
-          switchToSignup={() => setShowSignup(!showSignup)}
-        />
+        showSignup ? (
+          <SignupPage
+            onClose={() => setShowAuthModal(false)}
+            switchToLogin={() => setShowSignup(false)}
+          />
+        ) : (
+          <LoginPage
+            onClose={() => setShowAuthModal(false)}
+            switchToSignup={() => setShowSignup(true)}
+          />
+        )
       )}
     </>
   );
