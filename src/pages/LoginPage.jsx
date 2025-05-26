@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { MdEmail } from 'react-icons/md';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
-import Overlays from '../components/Overlays.jsx';
-import loginSideImage from "../assets/Forloginfront.png";
-import Mentarolgo from "../assets/mentarologo.png";
+import loginSideImage from "../assets/images/Forloginfront.png";
+import Mentarolgo from "./../assets/images/mentarologo.png";
+import Overlays from './../components/Overlays.jsx';
 
 const LoginPage = ({ onClose, switchToSignup }) => {
   const [showPassword, setShowPassword] = useState(false);
