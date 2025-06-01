@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { MdEmail } from 'react-icons/md';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
-import loginSideImage from "../assets/images/Forloginfront.png";
-import Mentarolgo from "./../assets/images/mentarologo.png";
-import Overlays from './../components/Overlays.jsx';
+import loginSideImage from "../assets/images/Thumbnail.png";
+import Mentarolgo from "../assets/images/mentarologo.png";
+import Overlays from '../components/Overlays.jsx'; 
 
-const LoginPage = ({ onClose, switchToSignup }) => {
+const SignupPage = ({ onClose  }) => {
   const [showPassword, setShowPassword] = useState(false);
-
+  const navigate = useNavigate();
+  const location = useLocation();
+  const handleSwitchToLogin = () => {
+    navigate('/login', { state: { backgroundLocation: location.state?.backgroundLocation || location } });
+  };
   return (
     <Overlays onClose={onClose} leftImage={loginSideImage}>
       {/* Logo & Description */}
-      <div className="flex items-center mb-2">
+      <div className="flex items-center mb-2 h-full">
         <img src={Mentarolgo} alt="Logo" />
       </div>
       <p className="mb-4 text-gray-500 text-sm">
@@ -22,22 +27,39 @@ const LoginPage = ({ onClose, switchToSignup }) => {
       <div className="flex justify-center">
         <div className="flex mb-6 bg-blue-100 p-1 rounded-full w-fit">
           <button
-            className="px-5 py-1 rounded-full font-medium mr-2 bg-blue-500 text-white shadow"
-            disabled
+            className="px-5 py-1 rounded-full font-medium mr-2 bg-blue-100 text-blue-600"
+            onClick={handleSwitchToLogin}
           >
             Login
           </button>
           <button
-            className="px-5 py-1 rounded-full font-medium bg-blue-100 text-blue-600"
-            onClick={switchToSignup}
+            className="px-5 py-1 rounded-full font-medium bg-blue-500 text-white shadow"
+            disabled
           >
             Register
           </button>
         </div>
       </div>
 
-      {/* Login Form */}
+      {/* Signup Form */}
       <form className="space-y-4">
+        <button
+          type="button"
+          className="w-full flex items-center justify-center border border-gray-300 rounded-lg py-2 hover:bg-gray-50 transition"
+        >
+          <img
+            src="https://www.svgrepo.com/show/355037/google.svg"
+            alt="Google"
+            className="h-5 w-5 mr-2"
+          />
+          <span className="font-medium text-gray-700">Sign Up with Google</span>
+        </button>
+        <div className="my-4 flex items-center">
+          <div className="flex-grow h-px bg-gray-200" />
+          <span className="mx-2 text-gray-400 text-xs">or you can</span>
+          <div className="flex-grow h-px bg-gray-200" />
+        </div>
+
         {/* Email Input with Icon on Right */}
         <div className="relative">
           <input
@@ -50,7 +72,7 @@ const LoginPage = ({ onClose, switchToSignup }) => {
           </span>
         </div>
 
-        {/* Password Input with Eye Toggle */}
+        {/* Password Input with Eye Toggle on Right */}
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}
@@ -68,43 +90,17 @@ const LoginPage = ({ onClose, switchToSignup }) => {
           </span>
         </div>
 
-        <div className="flex items-center justify-between text-sm">
-          <label className="flex items-center">
-            <input type="checkbox" className="mr-2" />
-            Remember me
-          </label>
-          <button type="button" className="text-blue-500 hover:underline">
-            Forgot Password ?
-          </button>
-        </div>
-
+        {/* Extra space between password and button */}
+        <div className="h-9" />
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
         >
-          Login
-        </button>
-
-        <div className="my-4 flex items-center">
-          <div className="flex-grow h-px bg-gray-200" />
-          <span className="mx-2 text-gray-400 text-xs">or you can</span>
-          <div className="flex-grow h-px bg-gray-200" />
-        </div>
-
-        <button
-          type="button"
-          className="w-full flex items-center justify-center border border-gray-300 rounded-lg py-2 hover:bg-gray-50 transition"
-        >
-          <img
-            src="https://www.svgrepo.com/show/355037/google.svg"
-            alt="Google"
-            className="h-5 w-5 mr-2"
-          />
-          <span className="font-medium text-gray-700">Sign In with Google</span>
+          Create Account
         </button>
       </form>
     </Overlays>
   );
 };
 
-export default LoginPage;
+export default SignupPage;

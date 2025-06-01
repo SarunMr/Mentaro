@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { Search } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import mentaroLogo from "./../assets/images/mentarologo.png";
-import LoginPage from "../pages/LoginPage";    // Adjust path if needed
-import SignupPage from "../pages/SignupPage";  // Adjust path if needed
 
 const MentaroNavbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -18,14 +17,14 @@ const MentaroNavbar = () => {
     console.log("Searching for:", searchQuery);
   };
 
+  // Navigate to /login with backgroundLocation state to show modal
   const openLogin = () => {
-    setShowSignup(false);
-    setShowAuthModal(true);
+    navigate("/login", { state: { backgroundLocation: location } });
   };
 
+  // Navigate to /register with backgroundLocation state to show modal
   const openSignup = () => {
-    setShowSignup(true);
-    setShowAuthModal(true);
+    navigate("/signup", { state: { backgroundLocation: location } });
   };
 
   return (
@@ -71,21 +70,6 @@ const MentaroNavbar = () => {
           </button>
         </div>
       </nav>
-
-      {/* Conditionally render LoginPage or SignupPage */}
-      {showAuthModal && (
-        showSignup ? (
-          <SignupPage
-            onClose={() => setShowAuthModal(false)}
-            switchToLogin={() => setShowSignup(false)}
-          />
-        ) : (
-          <LoginPage
-            onClose={() => setShowAuthModal(false)}
-            switchToSignup={() => setShowSignup(true)}
-          />
-        )
-      )}
     </>
   );
 };
