@@ -73,7 +73,6 @@ const CategorySelectorModal = ({ onClose }) => {
                   alt={cat.label}
                   className="w-full h-24 object-cover"
                 />
-                {/* Clean label with no dark background */}
                 <div className="absolute bottom-2 left-2 text-white text-sm font-medium drop-shadow">
                   {cat.label}
                 </div>
