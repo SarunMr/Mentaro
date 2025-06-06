@@ -9,6 +9,7 @@ import {
 import Homepage from "./pages/Homepage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
 
 function AppRoutes() {
   const location = useLocation();
@@ -16,31 +17,30 @@ function AppRoutes() {
 
   const state = location.state;
 
-  // Store original background location in a ref to preserve it across renders
   const originalBackgroundLocation = React.useRef(
     state?.backgroundLocation ||
       (location.pathname === "/login" || location.pathname === "/signup"
         ? { pathname: "/" }
         : location),
   );
+const backgroundLocation = originalBackgroundLocation.current;
+  const isModal = location.pathname === "/login" || location.pathname === "/signup";
 
-  const backgroundLocation = originalBackgroundLocation.current;
+  // Use backgroundLocation only if modal is open, else use current location
+  const routesLocation = isModal ? backgroundLocation : location;
 
   return (
     <>
-      {/* Render routes with backgroundLocation or current location */}
-      <Routes location={backgroundLocation}>
+      <Routes location={routesLocation}>
         <Route path="/" element={<Homepage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route
           path="/login"
           element={
             <LoginPage
               onClose={() => navigate("/", { replace: true })}
               switchToSignup={() =>
-                navigate("/signup", {
-                  state: { backgroundLocation },
-                  replace: true,
-                })
+                navigate("/signup", { state: { backgroundLocation }, replace: true })
               }
             />
           }
@@ -51,27 +51,21 @@ function AppRoutes() {
             <SignupPage
               onClose={() => navigate("/", { replace: true })}
               switchToLogin={() =>
-                navigate("/login", {
-                  state: { backgroundLocation },
-                  replace: true,
-                })
+                navigate("/login", { state: { backgroundLocation }, replace: true })
               }
             />
           }
         />
       </Routes>
 
-      {/* Render modal overlay only if current path is login or signup */}
-      {(location.pathname === "/login" || location.pathname === "/signup") && (
+      {/* Render modal overlays only if modal is open */}
+      {isModal && (
         <>
           {location.pathname === "/login" && (
             <LoginPage
               onClose={() => navigate("/", { replace: true })}
               switchToSignup={() =>
-                navigate("/signup", {
-                  state: { backgroundLocation },
-                  replace: true,
-                })
+                navigate("/signup", { state: { backgroundLocation }, replace: true })
               }
             />
           )}
@@ -79,10 +73,7 @@ function AppRoutes() {
             <SignupPage
               onClose={() => navigate("/", { replace: true })}
               switchToLogin={() =>
-                navigate("/login", {
-                  state: { backgroundLocation },
-                  replace: true,
-                })
+                navigate("/login", { state: { backgroundLocation }, replace: true })
               }
             />
           )}
