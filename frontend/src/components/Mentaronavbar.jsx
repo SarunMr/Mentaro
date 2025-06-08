@@ -2,11 +2,13 @@ import React, { useState } from "react";
 import { Search } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import mentaroLogo from "./../assets/images/mentarologo.png";
+import InstructorSidebar from './../components/InstructorSidebar';
 
 const MentaroNavbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -27,6 +29,7 @@ const MentaroNavbar = () => {
     navigate("/signup", { state: { backgroundLocation: location } });
   };
 
+<InstructorSidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
   return (
     <>
       <nav className="bg-white shadow-md py-4 px-6 flex items-center justify-between">
@@ -55,10 +58,11 @@ const MentaroNavbar = () => {
         </form>
 
         {/* Navigation Items */}
-        <div className="flex items-center space-x-6">
+        <div onClick={() => setIsSidebarOpen(true)}>
           <a href="#" className="text-gray-700 hover:text-blue-600">
             Become Instructor
           </a>
+
           <button onClick={openLogin} className="text-gray-700 hover:text-blue-600">
             Login
           </button>
