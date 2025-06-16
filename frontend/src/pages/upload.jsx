@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import MentaroNavbar from '../components/Mentaronavbar.jsx';
+import { FiUpload, FiX, FiBell } from 'react-icons/fi';
 import MentaroFooter from '../components/Mentarofooter.jsx';
-import { FiUpload, FiX } from 'react-icons/fi';
+import girlAvatar from '../assets/images/girl.png';
 
 export default function UploadPage() {
   const [files, setFiles] = useState([]);
@@ -48,17 +48,25 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <MentaroNavbar />
+      <header className="flex justify-end items-center px-4 py-3 bg-white shadow-sm">
+        <span className="text-gray-700 font-medium mr-4">Student</span>
+        <FiBell className="h-6 w-6 text-gray-500 mr-4" />
+        <img
+        src={ girlAvatar} // Placeholder for avatar image
+          alt="User Avatar"
+          className="h-10 w-10 rounded-full"
+        />
+      </header>
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">Upload Content</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">Add Courses</h1>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title Input */}
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                Title
+                Course Title
               </label>
               <input
                 type="text"
@@ -74,7 +82,7 @@ export default function UploadPage() {
             {/* Description Input */}
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                Description
+                Course Description
               </label>
               <textarea
                 id="description"
@@ -90,7 +98,7 @@ export default function UploadPage() {
             {/* Category Selection */}
             <div>
               <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                Category
+                Course Category
               </label>
               <select
                 id="category"
@@ -164,7 +172,7 @@ export default function UploadPage() {
             )}
 
             {/* Submit Button */}
-            <div className="flex justify-end">
+            <div className="flex justify-between">
               <button
                 type="submit"
                 disabled={isUploading || files.length === 0}
@@ -176,12 +184,23 @@ export default function UploadPage() {
               >
                 {isUploading ? 'Uploading...' : 'Upload'}
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFiles([]);
+                  setTitle('');
+                  setDescription('');
+                  setCategory('');
+                }}
+                className="px-6 py-2 rounded-lg text-gray-700 font-medium bg-gray-200 hover:bg-gray-300"
+              >
+                Next
+              </button>
             </div>
           </form>
         </div>
       </main>
-
-      <MentaroFooter />
+      <MentaroFooter />  
     </div>
   );
 }
