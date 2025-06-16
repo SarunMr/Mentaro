@@ -6,6 +6,6 @@ import UploadPage from "./pages/upload.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <UploadPage/>
+    <App/>
   </StrictMode>,
 );
