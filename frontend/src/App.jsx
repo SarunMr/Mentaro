@@ -6,10 +6,12 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+
 import Homepage from "./pages/Homepage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import InstructorDashboard from './components/InstructorSidebar.jsx'; 
 
 function AppRoutes() {
   const location = useLocation();
@@ -34,6 +36,7 @@ const backgroundLocation = originalBackgroundLocation.current;
       <Routes location={routesLocation}>
         <Route path="/" element={<Homepage />} />
         <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/instructor-dashboard" element={<InstructorDashboard />} />
         <Route
           path="/login"
           element={

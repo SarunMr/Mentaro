@@ -56,7 +56,6 @@ const MentaroNavbar = () => {
             </button>
           </div>
         </form>
-
         {/* Navigation Items */}
         <div onClick={() => setIsSidebarOpen(true)}>
           <a href="#" className="text-gray-700 hover:text-blue-600">

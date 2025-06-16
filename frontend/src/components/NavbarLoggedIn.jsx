@@ -3,6 +3,7 @@ import { FaShoppingCart, FaBell } from "react-icons/fa";
 import { MdLogout } from "react-icons/md";
 import { HiOutlineUserCircle } from "react-icons/hi";
 import mentaroLogo from "./../assets/images/mentarologo.png";
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // Utility to generate a random username
 function generateUsername() {
@@ -15,18 +16,24 @@ function generateUsername() {
   );
 }
 
-// Example usage: Pass these as props from your login logic
-const randomUsername = generateUsername();
-const loggedEmail = location.state?.email;
-
-const Navbar = ({ email = loggedEmail, username = randomUsername }) => {
+const NavbarLoggedIn = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const randomUsername = generateUsername();
+  const loggedEmail = location.state?.email || "user@example.com";
+
+  const handleBecomeInstructor = () => {
+    // Add any logic here (form validation, API calls, etc.)
+    navigate("/instructor-dashboard");
+  };
 
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
       {/* Logo and Brand */}
       <div className="flex items-center">
-          <img src={mentaroLogo} alt="Mentaro Logo" className="h-10" />
+        <img src={mentaroLogo} alt="Mentaro Logo" className="h-10" />
       </div>
 
       {/* Search Bar */}
@@ -40,7 +47,10 @@ const Navbar = ({ email = loggedEmail, username = randomUsername }) => {
 
       {/* Navigation & User */}
       <div className="flex items-center space-x-4">
-        <button className="text-gray-700 hover:text-blue-600 font-medium">
+        <button
+          className="text-gray-700 hover:text-blue-600 font-medium"
+          onClick={handleBecomeInstructor}
+        >
           Become Instructor
         </button>
         <FaShoppingCart className="text-xl text-gray-600 hover:text-blue-600 cursor-pointer" />
@@ -56,10 +66,14 @@ const Navbar = ({ email = loggedEmail, username = randomUsername }) => {
             <HiOutlineUserCircle className="text-3xl text-gray-700" />
           </button>
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-50">
+            <div
+              className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-50"
+              onMouseEnter={() => setDropdownOpen(true)}
+              onMouseLeave={() => setDropdownOpen(false)}
+            >
               <div className="px-4 py-3 border-b">
-                <div className="font-medium">{username}</div>
-                <div className="text-sm text-gray-500 truncate">{email}</div>
+                <div className="font-medium">{randomUsername}</div>
+                <div className="text-sm text-gray-500 truncate">{loggedEmail}</div>
               </div>
               <ul className="py-1">
                 <li>
@@ -121,4 +135,4 @@ const Navbar = ({ email = loggedEmail, username = randomUsername }) => {
   );
 };
 
-export default Navbar;
+export default NavbarLoggedIn;
