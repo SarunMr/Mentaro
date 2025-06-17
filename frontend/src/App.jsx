@@ -12,6 +12,7 @@ import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import InstructorDashboard from './components/InstructorSidebar.jsx'; 
+import CourseCard from "./components/CourseCard.jsx";
 
 function AppRoutes() {
   const location = useLocation();
@@ -37,6 +38,7 @@ const backgroundLocation = originalBackgroundLocation.current;
         <Route path="/" element={<Homepage />} />
         <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/Instructor-dashboard" element={<InstructorDashboard />} />
+            <Route path="/my-courses" element={<CourseCard />} />
         <Route
           path="/login"
           element={

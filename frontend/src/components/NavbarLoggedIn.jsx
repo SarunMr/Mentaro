@@ -28,6 +28,10 @@ const NavbarLoggedIn = () => {
     // Add any logic here (form validation, API calls, etc.)
     navigate("/instructor-dashboard");
   };
+   const handleMyCourseClick = () => {
+    // You can add authentication check here
+    navigate('/my-courses');
+  };
 
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
@@ -78,6 +82,7 @@ const NavbarLoggedIn = () => {
               <ul className="py-1">
                 <li>
                   <a
+                  onClick={handleMyCourseClick} 
                     href="/my-courses"
                     className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
                   >
