@@ -36,7 +36,7 @@ const backgroundLocation = originalBackgroundLocation.current;
       <Routes location={routesLocation}>
         <Route path="/" element={<Homepage />} />
         <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/instructor-dashboard" element={<InstructorDashboard />} />
+          <Route path="/Instructor-dashboard" element={<InstructorDashboard />} />
         <Route
           path="/login"
           element={
