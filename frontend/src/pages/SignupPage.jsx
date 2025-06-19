@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { MdEmail } from 'react-icons/md';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import loginSideImage from "../assets/images/Thumbnail.png";
 import Mentarolgo from "../assets/images/mentarologo.png";
 import Overlays from '../components/Overlays.jsx'; 
 
-const SignupPage = ({ onClose, switchToLogin }) => {
+const SignupPage = ({ onClose  }) => {
   const [showPassword, setShowPassword] = useState(false);
-
+  const navigate = useNavigate();
+  const location = useLocation();
+  const handleSwitchToLogin = () => {
+    navigate('/login', { state: { backgroundLocation: location.state?.backgroundLocation || location } });
+  };
   return (
     <Overlays onClose={onClose} leftImage={loginSideImage}>
       {/* Logo & Description */}
@@ -23,7 +28,7 @@ const SignupPage = ({ onClose, switchToLogin }) => {
         <div className="flex mb-6 bg-blue-100 p-1 rounded-full w-fit">
           <button
             className="px-5 py-1 rounded-full font-medium mr-2 bg-blue-100 text-blue-600"
-            onClick={switchToLogin}
+            onClick={handleSwitchToLogin}
           >
             Login
           </button>
