@@ -1,3 +1,4 @@
+
 import MentaroNavbar from "./../components/Mentaronavbar.jsx";
 import MentaroFooter from "./../components/Mentarofooter.jsx";
 import MentaroHero from "./../components/Mentaroherosection.jsx";
