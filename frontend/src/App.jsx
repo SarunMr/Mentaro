@@ -11,8 +11,10 @@ import Homepage from "./pages/Homepage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
-import InstructorDashboard from './components/InstructorSidebar.jsx'; 
-import CourseCard from "./components/CourseCard.jsx";
+import InstructorDashboard from './components/InstructorSidebar.jsx';
+import InstructorDashboardHome from "./components/InstructorDashboardHome.jsx";
+import MyCourses from "./pages/Mycourse.jsx";
+import CourseCard from "./components/UserCourse.jsx";
 
 function AppRoutes() {
   const location = useLocation();
@@ -22,11 +24,11 @@ function AppRoutes() {
 
   const originalBackgroundLocation = React.useRef(
     state?.backgroundLocation ||
-      (location.pathname === "/login" || location.pathname === "/signup"
-        ? { pathname: "/" }
-        : location),
+    (location.pathname === "/login" || location.pathname === "/signup"
+      ? { pathname: "/" }
+      : location),
   );
-const backgroundLocation = originalBackgroundLocation.current;
+  const backgroundLocation = originalBackgroundLocation.current;
   const isModal = location.pathname === "/login" || location.pathname === "/signup";
 
   // Use backgroundLocation only if modal is open, else use current location
@@ -37,8 +39,11 @@ const backgroundLocation = originalBackgroundLocation.current;
       <Routes location={routesLocation}>
         <Route path="/" element={<Homepage />} />
         <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/Instructor-dashboard" element={<InstructorDashboard />} />
-            <Route path="/my-courses" element={<CourseCard />} />
+        <Route path="/Instructor-dashboard/*" element={<InstructorDashboard />}>
+          <Route index element={<InstructorDashboardHome />} /> {/* Default for /Instructor-dashboard */}
+          <Route path="my-courses" element={<MyCourses />} />
+        </Route>
+        <Route path="/courses" element={<CourseCard />} />
         <Route
           path="/login"
           element={
