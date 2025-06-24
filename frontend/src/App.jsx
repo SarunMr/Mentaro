@@ -12,7 +12,6 @@ import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import InstructorDashboard from './components/InstructorSidebar.jsx';
-import InstructorDashboardHome from "./components/InstructorDashboardHome.jsx";
 import MyCourses from "./pages/Mycourse.jsx";
 import CourseCard from "./components/UserCourse.jsx";
 
@@ -40,8 +39,7 @@ function AppRoutes() {
         <Route path="/" element={<Homepage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/Instructor-dashboard/*" element={<InstructorDashboard />}>
-          <Route index element={<InstructorDashboardHome />} /> {/* Default for /Instructor-dashboard */}
-          <Route path="my-courses" element={<MyCourses />} />
+          <Route index element={<MyCourses />} /> {/* Default for /Instructor-dashboard */}
         </Route>
         <Route path="/courses" element={<CourseCard />} />
         <Route
