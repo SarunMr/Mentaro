@@ -4,7 +4,8 @@ import "./index.css";
 // import CourseCard from "./components/CourseCard.jsx";
 import App from "./App.jsx";
 // import { Upload } from "lucide-react";
-import UploadPage from "./pages/Mycourse.jsx";
+// import UploadPage from "./pages/Mycourse.jsx";
+// import CourseWishlist from "./components/wishlist.jsx";
 
 
 createRoot(document.getElementById("root")).render(

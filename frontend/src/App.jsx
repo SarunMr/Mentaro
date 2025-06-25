@@ -13,7 +13,8 @@ import SignupPage from "./pages/SignupPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import InstructorDashboard from './components/InstructorSidebar.jsx';
 import MyCourses from "./pages/Mycourse.jsx";
-import CourseCard from "./components/UserCourse.jsx";
+// import courses from "./components/UserCourse.jsx";
+import { User } from "lucide-react";
 
 function AppRoutes() {
   const location = useLocation();
@@ -41,7 +42,7 @@ function AppRoutes() {
         <Route path="/Instructor-dashboard/*" element={<InstructorDashboard />}>
           <Route index element={<MyCourses />} /> {/* Default for /Instructor-dashboard */}
         </Route>
-        <Route path="/courses" element={<CourseCard />} />
+        <Route path="/courses" element={<UserCourses />} /> 
         <Route
           path="/login"
           element={

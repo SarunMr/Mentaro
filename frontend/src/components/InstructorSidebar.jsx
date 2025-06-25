@@ -14,7 +14,7 @@ const InstructorDashboard = () => {
       id: 'courses',
       icon: Monitor,
       label: 'Courses',
-      route: 'my-courses', // Add route for navigation
+      route: '/my-courses', // Add route for navigation
     },
     {
       id: 'communication',
