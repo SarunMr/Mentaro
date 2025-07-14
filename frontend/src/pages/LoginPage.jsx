@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { MdEmail } from "react-icons/md";
+import { useNavigate, useLocation } from "react-router-dom"; import { MdEmail } from "react-icons/md";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import loginSideImage from "../assets/images/Forloginfront.png";
 import Mentarolgo from "./../assets/images/mentarologo.png";
