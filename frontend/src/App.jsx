@@ -10,6 +10,7 @@ import Homepage from "./pages/Homepage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import UploadPage from "./pages/upload.jsx";
 
 function AppRoutes() {
   const location = useLocation();
@@ -34,6 +35,7 @@ const backgroundLocation = originalBackgroundLocation.current;
       <Routes location={routesLocation}>
         <Route path="/" element={<Homepage />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/upload" element={<UploadPage />} />
         <Route
           path="/login"
           element={
