@@ -12,4 +12,14 @@ export const sequelize = new Sequelize(DATABASE, USERNAME, PASSWORD, {
   logging: false,
 });
 
-export default sequelize;
+
+export const db = async () => {
+  try {
+    await sequelize.authenticate();  // checks DB connection
+    await sequelize.sync({ alter: true }); // updates tables if needed
+    console.log('✅ Database connected and synced successfully');
+  } catch (error) {
+    console.error('❌ Failed to connect or sync database:', error);
+    process.exit(1); // stop server if DB fails
+  }
+};

@@ -129,24 +129,6 @@ const LoginPage = ({ onClose }) => {
         >
           Login
         </button>
-
-        <div className="my-4 flex items-center">
-          <div className="flex-grow h-px bg-gray-200" />
-          <span className="mx-2 text-gray-400 text-xs">or you can</span>
-          <div className="flex-grow h-px bg-gray-200" />
-        </div>
-
-        <button
-          type="button"
-          className="w-full flex items-center justify-center border border-gray-300 rounded-lg py-2 hover:bg-gray-50 transition"
-        >
-          <img
-            src="https://www.svgrepo.com/show/355037/google.svg"
-            alt="Google"
-            className="h-5 w-5 mr-2"
-          />
-          <span className="font-medium text-gray-700">Sign In with Google</span>
-        </button>
       </form>
     </Overlays>
   );

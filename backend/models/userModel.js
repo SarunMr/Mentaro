@@ -1,7 +1,7 @@
-import { DataTypes} from sequelize;
-import sequelize from '../config/database.js';
+import { DataTypes} from "sequelize";
+import {sequelize} from '../config/database.js';
 
-export default  User = sequelize.define('User', {
+const User = sequelize.define('User', {
   userid: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -34,3 +34,5 @@ export default  User = sequelize.define('User', {
   timestamps: true, // Enable if you want createdAt/updatedAt
 });
 
+
+export default User;

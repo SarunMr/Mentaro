@@ -1,6 +1,7 @@
-import bcrypt from bcryptjs;
+import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
-import jwt from jsonwebtoken
+import jwt from "jsonwebtoken";
+import { Op } from "sequelize";
 import User from '../models/userModel';
 
 
@@ -23,7 +24,7 @@ export const authController = {
       // Check if user or email already exists
       const existingUser = await User.findOne({
         where: { 
-          [User.sequelize.Op.or]: [{ username }, { email }]
+          [Op.or]: [{ username }, { email }]
         }
       });
       if (existingUser) {
@@ -63,10 +64,10 @@ export const authController = {
   // Login user
   async login(req, res) {
     try {
-      const { username, password } = req.body;
+      const { email, password } = req.body;
 
       // Find user by username
-      const user = await User.findOne({ where: { username } });
+      const user = await User.findOne({ where: { email } });
       if (!user) {
         return res.status(401).json({ message: 'Invalid username or password' });
       }
