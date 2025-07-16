@@ -12,6 +12,14 @@ import SignupPage from "./pages/SignupPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import UploadPage from "./pages/upload.jsx";
 
+//Admin Pages
+import AdminPage from "./pages/AdminPage/AdminPage.jsx";
+import AdminDashboard from "./pages/AdminPage/AdminDashboard.jsx";
+import MyCourse from "./pages/AdminPage/MyCourse.jsx";
+import AddCoursePage from "./pages/AdminPage/AddCourse.jsx";
+
+
+
 function AppRoutes() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -36,6 +44,11 @@ const backgroundLocation = originalBackgroundLocation.current;
         <Route path="/" element={<Homepage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/upload" element={<UploadPage />} />
+        <Route path="/admin" element={<AdminPage/>} >
+          <Route path="dashboard" element={<AdminDashboard/>}></Route>
+          <Route path="mycourse" element={<MyCourse/>}></Route>
+          <Route path="addCourse" element={<AddCoursePage/>}></Route>
+        </Route>
         <Route
           path="/login"
           element={

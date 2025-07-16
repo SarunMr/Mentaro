@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import axios from "axios";
 import { MdEmail } from "react-icons/md";
 import { FaRegCircleUser } from "react-icons/fa6";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -17,6 +18,9 @@ const SignupPage = ({ onClose }) => {
     confirmPassword: "",
   });
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState(""); // for backend errors
+  const [isLoading, setIsLoading] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -39,7 +43,6 @@ const SignupPage = ({ onClose }) => {
     if (!form.email.trim()) {
       newErrors.email = "Email is required";
     } else {
-      // Basic email format check
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(form.email)) {
         newErrors.email = "Email is invalid";
@@ -59,23 +62,52 @@ const SignupPage = ({ onClose }) => {
     }
 
     setErrors(newErrors);
-
-    // Validation passes if no errors
     return Object.keys(newErrors).length === 0;
   };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setApiError(""); // clear API error on new input
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validate()) {
-      // Proceed with form submission (e.g., API call)
-      console.log("Form data", form);
-      // Optionally clear form or close modal
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!validate()) return;
+
+  setIsLoading(true);
+  setApiError("");
+
+  try {
+    const res = await axios.post("http://localhost:5001/api/auth/register", {
+      username: form.username,
+      email: form.email,
+      password: form.password,
+    });
+
+    // Registration successful - you can navigate to login or dashboard
+    navigate("/login", { replace: true });
+  } catch (error) {
+    console.error("Registration error:", error); // Add this for debugging
+    
+    // Handle errors from backend
+    if (error.response) {
+      // Server responded with error status
+      const errorMessage = error.response.data?.message || 
+                          error.response.data?.error || 
+                          `Registration failed: ${error.response.status} ${error.response.statusText}`;
+      setApiError(errorMessage);
+    } else if (error.request) {
+      // Request was made but no response received
+      setApiError("Unable to connect to server. Please check your internet connection.");
+    } else {
+      // Something else happened
+      setApiError("An unexpected error occurred. Please try again.");
     }
-  };
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <Overlays onClose={onClose} leftImage={loginSideImage}>
@@ -103,7 +135,14 @@ const SignupPage = ({ onClose }) => {
         </div>
       </div>
 
+      {apiError && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
+          {apiError}
+        </div>
+      )}
+
       <form className="space-y-4" onSubmit={handleSubmit}>
+        {/* Username */}
         <div className="relative">
           <input
             type="text"
@@ -125,6 +164,7 @@ const SignupPage = ({ onClose }) => {
           )}
         </div>
 
+        {/* Email */}
         <div className="relative">
           <input
             type="email"
@@ -146,6 +186,7 @@ const SignupPage = ({ onClose }) => {
           )}
         </div>
 
+        {/* Password */}
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}
@@ -177,6 +218,7 @@ const SignupPage = ({ onClose }) => {
           )}
         </div>
 
+        {/* Confirm Password */}
         <div className="relative">
           <input
             type={showConfirmPassword ? "text" : "password"}
@@ -213,9 +255,14 @@ const SignupPage = ({ onClose }) => {
         <div className="h-9" />
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+          className={`w-full py-2 rounded-lg font-semibold transition ${
+            isLoading
+              ? "bg-blue-300 text-white cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+          disabled={isLoading}
         >
-          Create Account
+          {isLoading ? "Registering..." : "Create Account"}
         </button>
       </form>
     </Overlays>
