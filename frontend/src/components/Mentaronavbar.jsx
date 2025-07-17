@@ -1,7 +1,17 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import mentaroLogo from "./../assets/images/mentarologo.png";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const MentaroNavbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -26,6 +36,7 @@ const MentaroNavbar = () => {
   const openSignup = () => {
     navigate("/signup", { state: { backgroundLocation: location } });
   };
+  const user = true;
 
   return (
     <>
@@ -55,20 +66,56 @@ const MentaroNavbar = () => {
         </form>
 
         {/* Navigation Items */}
-        <div className="flex items-center space-x-6">
-          <a href="#" className="text-gray-700 hover:text-blue-600">
-            Become Instructor
-          </a>
-          <button onClick={openLogin} className="text-gray-700 hover:text-blue-600">
-            Login
-          </button>
-          <button
-            onClick={openSignup}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            Sign Up
-          </button>
-        </div>
+        {user ? (
+          <div className="flex items-center space-x-6">
+            <a href="#" className="text-gray-700 hover:text-blue-600">
+              Become Instructor
+            </a>
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Avatar>
+                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>Username</DropdownMenuLabel>
+                <DropdownMenuLabel>useremail@gmail.com</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Link to="my-learning">My Courses</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>My Cart</DropdownMenuItem>
+                <DropdownMenuItem>WishList</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Notification</DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link to="profile">Account Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Logout</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-6">
+            <a href="#" className="text-gray-700 hover:text-blue-600">
+              Become Instructor
+            </a>
+            <button
+              onClick={openLogin}
+              className="text-gray-700 hover:text-blue-600"
+            >
+              Login
+            </button>
+            <button
+              onClick={openSignup}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
+              Sign Up
+            </button>
+          </div>
+        )}
       </nav>
     </>
   );

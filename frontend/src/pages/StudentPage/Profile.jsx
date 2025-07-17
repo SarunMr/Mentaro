@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import MentaroNavbar from '../components/Mentaronavbar.jsx';
-import MentaroFooter from '../components/Mentarofooter.jsx';
-import girlAvatar from '../assets/images/girl.png';
+import girlAvatar from '../../assets/images/girl.png';
 
-export default function Profilepage() { // Changed from Homepage to ProfilePage
+export default function Profilepage() {
   const [formData, setFormData] = useState({
     firstName: 'Jonathan',
     lastName: 'Doe',
@@ -17,7 +15,7 @@ export default function Profilepage() { // Changed from Homepage to ProfilePage
   const [activeTab, setActiveTab] = useState('Profile');
   const [isSubmitting, setIsSubmitting] = useState(false); // Added loading state
 
-  const tabs = ['Profile', 'Personalisation', 'Account', 'Payment Methods', 'Notifications', 'Privacy'];
+  const tabs = ['Profile', 'Account', 'Payment Methods', 'Notifications'];
 
   const validateForm = () => {
     const newErrors = {};
@@ -77,8 +75,6 @@ export default function Profilepage() { // Changed from Homepage to ProfilePage
 
   return (
     <div className="min-h-screen flex flex-col justify-between">
-      <MentaroNavbar />
-
       <main className="flex-grow flex flex-col items-center px-4 py-10">
         <div className="w-full max-w-2xl">
           <h2 className="text-2xl font-semibold text-center mb-6">My Account</h2>
@@ -211,8 +207,6 @@ export default function Profilepage() { // Changed from Homepage to ProfilePage
           )}
         </div>
       </main>
-
-      <MentaroFooter />
     </div>
   );
 }

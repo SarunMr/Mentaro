@@ -6,11 +6,14 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+//Student
 import Homepage from "./pages/Homepage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import UploadPage from "./pages/upload.jsx";
+import MyLearning from "./pages/StudentPage/Mylearning.jsx";
+import Profile from "./pages/StudentPage/Profile.jsx";
 
 //Admin Pages
 import AdminPage from "./pages/AdminPage/AdminPage.jsx";
@@ -23,7 +26,6 @@ import AddCoursePage from "./pages/AdminPage/AddCourse.jsx";
 function AppRoutes() {
   const location = useLocation();
   const navigate = useNavigate();
-
   const state = location.state;
 
   const originalBackgroundLocation = React.useRef(
@@ -43,7 +45,10 @@ const backgroundLocation = originalBackgroundLocation.current;
       <Routes location={routesLocation}>
         <Route path="/" element={<Homepage />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/my-learning" element={<MyLearning/>}></Route>
+        <Route path="/profile" element={<Profile/>}></Route>
         <Route path="/upload" element={<UploadPage />} />
+
         <Route path="/admin" element={<AdminPage/>} >
           <Route path="dashboard" element={<AdminDashboard/>}></Route>
           <Route path="mycourse" element={<MyCourse/>}></Route>
