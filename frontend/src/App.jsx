@@ -18,10 +18,11 @@ import Profile from "./pages/StudentPage/Profile.jsx";
 //Admin Pages
 import AdminPage from "./pages/AdminPage/AdminPage.jsx";
 import AdminDashboard from "./pages/AdminPage/AdminDashboard.jsx";
-import MyCourse from "./pages/AdminPage/MyCourse.jsx";
 import AddCoursePage from "./pages/AdminPage/AddCourse.jsx";
-
-
+import Course from "./pages/AdminPage/Course.jsx";
+import ApprovalsPage from "./pages/AdminPage/Approvals.jsx";
+import HelpPage from "./pages/AdminPage/Help.jsx";
+import ToolsPage from "./pages/AdminPage/Tools.jsx";
 
 function AppRoutes() {
   const location = useLocation();
@@ -34,8 +35,9 @@ function AppRoutes() {
         ? { pathname: "/" }
         : location),
   );
-const backgroundLocation = originalBackgroundLocation.current;
-  const isModal = location.pathname === "/login" || location.pathname === "/signup";
+  const backgroundLocation = originalBackgroundLocation.current;
+  const isModal =
+    location.pathname === "/login" || location.pathname === "/signup";
 
   // Use backgroundLocation only if modal is open, else use current location
   const routesLocation = isModal ? backgroundLocation : location;
@@ -45,14 +47,17 @@ const backgroundLocation = originalBackgroundLocation.current;
       <Routes location={routesLocation}>
         <Route path="/" element={<Homepage />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/my-learning" element={<MyLearning/>}></Route>
-        <Route path="/profile" element={<Profile/>}></Route>
+        <Route path="/my-learning" element={<MyLearning />}></Route>
+        <Route path="/profile" element={<Profile />}></Route>
         <Route path="/upload" element={<UploadPage />} />
 
-        <Route path="/admin" element={<AdminPage/>} >
-          <Route path="dashboard" element={<AdminDashboard/>}></Route>
-          <Route path="mycourse" element={<MyCourse/>}></Route>
-          <Route path="addCourse" element={<AddCoursePage/>}></Route>
+        <Route path="/admin" element={<AdminPage />}>
+          <Route path="dashboard" element={<AdminDashboard />}></Route>
+          <Route path="course" element={<AddCoursePage />}></Route>
+          <Route path="course/create" element={<Course />}></Route>
+          <Route path="approvals" element={<ApprovalsPage />}></Route>
+          <Route path="tools" element={<ToolsPage />}></Route>
+          <Route path="help" element={<HelpPage />}></Route>
         </Route>
         <Route
           path="/login"
@@ -60,7 +65,10 @@ const backgroundLocation = originalBackgroundLocation.current;
             <LoginPage
               onClose={() => navigate("/", { replace: true })}
               switchToSignup={() =>
-                navigate("/signup", { state: { backgroundLocation }, replace: true })
+                navigate("/signup", {
+                  state: { backgroundLocation },
+                  replace: true,
+                })
               }
             />
           }
@@ -71,7 +79,10 @@ const backgroundLocation = originalBackgroundLocation.current;
             <SignupPage
               onClose={() => navigate("/", { replace: true })}
               switchToLogin={() =>
-                navigate("/login", { state: { backgroundLocation }, replace: true })
+                navigate("/login", {
+                  state: { backgroundLocation },
+                  replace: true,
+                })
               }
             />
           }
@@ -85,7 +96,10 @@ const backgroundLocation = originalBackgroundLocation.current;
             <LoginPage
               onClose={() => navigate("/", { replace: true })}
               switchToSignup={() =>
-                navigate("/signup", { state: { backgroundLocation }, replace: true })
+                navigate("/signup", {
+                  state: { backgroundLocation },
+                  replace: true,
+                })
               }
             />
           )}
@@ -93,7 +107,10 @@ const backgroundLocation = originalBackgroundLocation.current;
             <SignupPage
               onClose={() => navigate("/", { replace: true })}
               switchToLogin={() =>
-                navigate("/login", { state: { backgroundLocation }, replace: true })
+                navigate("/login", {
+                  state: { backgroundLocation },
+                  replace: true,
+                })
               }
             />
           )}
