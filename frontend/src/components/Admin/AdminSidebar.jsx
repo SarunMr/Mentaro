@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   FilePlus2,
   MessageSquare,
+  CheckCheck,
   BarChart2,
   Settings,
   HelpCircle,
@@ -36,6 +37,11 @@ const Sidebar = () => {
             <SidebarItem
               icon={<FilePlus2 className="h-5 w-5" />}
               text="Add Course"
+              isHovered={isHovered}
+            />
+            <SidebarItem
+              icon={<CheckCheck className="h-5 w-5" />}
+              text="Approvals"
               isHovered={isHovered}
             />
             <SidebarItem
