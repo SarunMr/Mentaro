@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
-import InstructorSidebar from "../../components/Instructor/InstructorSidebar";
-import InstructorNavbar from "../../components/Instructor/InstructorNavbar";
+import InstructorSidebar from "../../components/Instructor/InstructorSidebar.jsx";
+import InstructorNavbar from "../../components/Instructor/InsturctorNavbar.jsx";
 export default function AdminPage() {
   return (
     <>
