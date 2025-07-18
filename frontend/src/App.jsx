@@ -7,13 +7,18 @@ import {
   useNavigate,
 } from "react-router-dom";
 //Student
+import OverviewPage from "./pages/StudentPage/Overview.jsx";
+import MyCoursesPage from "./pages/StudentPage/MyCoursePage.jsx";
+import CartPage from "./pages/StudentPage/MyCartPage.jsx";
+import WishlistPage from "./pages/StudentPage/MyWishlist.jsx";
+import NotificationsPage from "./pages/StudentPage/NotificationPage.jsx";
+import SettingsPage from "./pages/StudentPage/SettingsPage.jsx";
+import BrowseCourses from "./pages/StudentPage/BrowsesPage.jsx";
+
+//Credentials Page
 import Homepage from "./pages/Homepage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
-import UploadPage from "./pages/upload.jsx";
-import MyLearning from "./pages/StudentPage/Mylearning.jsx";
-import Profile from "./pages/StudentPage/Profile.jsx";
 
 //Admin Pages
 import AdminPage from "./pages/AdminPage/AdminPage.jsx";
@@ -53,10 +58,13 @@ function AppRoutes() {
     <>
       <Routes location={routesLocation}>
         <Route path="/" element={<Homepage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/my-learning" element={<MyLearning />}></Route>
-        <Route path="/profile" element={<Profile />}></Route>
-        <Route path="/upload" element={<UploadPage />} />
+        <Route path="/dashboard" element={<OverviewPage />} />
+        <Route path="/my-courses" element={<MyCoursesPage />}></Route>
+        <Route path="/my-cart" element={<CartPage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/courses" element={<BrowseCourses />} />
 
         <Route path="/admin" element={<AdminPage />}>
           <Route path="dashboard" element={<AdminDashboard />}></Route>
@@ -66,7 +74,7 @@ function AppRoutes() {
           <Route path="help" element={<HelpPage />}></Route>
         </Route>
 
-        <Route path="instructor" element={<InstructorPage />}>
+        <Route path="/instructor" element={<InstructorPage />}>
           <Route path="dashboard" element={<InstructorDasboard />}></Route>
           <Route path="course" element={<InstructorAddCourse />}></Route>
           <Route path="revenue" element={<InstructorRevenue />}></Route>
