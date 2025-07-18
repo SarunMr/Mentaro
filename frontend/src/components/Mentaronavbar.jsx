@@ -36,7 +36,7 @@ const MentaroNavbar = () => {
   const openSignup = () => {
     navigate("/signup", { state: { backgroundLocation: location } });
   };
-  const user = true;
+  const user = false;
 
   return (
     <>
