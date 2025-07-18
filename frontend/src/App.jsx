@@ -18,12 +18,18 @@ import Profile from "./pages/StudentPage/Profile.jsx";
 //Admin Pages
 import AdminPage from "./pages/AdminPage/AdminPage.jsx";
 import AdminDashboard from "./pages/AdminPage/AdminDashboard.jsx";
-import AddCoursePage from "./pages/AdminPage/AddCourse.jsx";
-import Course from "./pages/AdminPage/Course.jsx";
 import ApprovalsPage from "./pages/AdminPage/Approvals.jsx";
 import HelpPage from "./pages/AdminPage/Help.jsx";
-import Revenue from "./pages/AdminPage/Revenue.jsx";
 import ToolsPage from "./pages/AdminPage/Tools.jsx";
+import Revenue from "./pages/AdminPage/Revenue.jsx";
+
+//Instructor Page
+import InstructorPage from "./pages/InstructorPage/InstructorPage.jsx";
+import InstructorDasboard from "./pages/InstructorPage/InstructorDashboard.jsx";
+import InstructorAddCourse from "./pages/InstructorPage/InstructorAddCourse.jsx";
+import InstructorRevenue from "./pages/InstructorPage/InstuctorRevenue.jsx";
+import InstructorTools from "./pages/InstructorPage/InstuctorTools.jsx";
+import InstructorHelp from "./pages/InstructorPage/InsturctorHelp.jsx";
 
 function AppRoutes() {
   const location = useLocation();
@@ -54,13 +60,20 @@ function AppRoutes() {
 
         <Route path="/admin" element={<AdminPage />}>
           <Route path="dashboard" element={<AdminDashboard />}></Route>
-          <Route path="course" element={<AddCoursePage />}></Route>
-          <Route path="course/create" element={<Course />}></Route>
           <Route path="approvals" element={<ApprovalsPage />}></Route>
           <Route path="tools" element={<ToolsPage />}></Route>
           <Route path="revenue" element={<Revenue />}></Route>
           <Route path="help" element={<HelpPage />}></Route>
         </Route>
+
+        <Route path="instructor" element={<InstructorPage />}>
+          <Route path="dashboard" element={<InstructorDasboard />}></Route>
+          <Route path="course" element={<InstructorAddCourse />}></Route>
+          <Route path="revenue" element={<InstructorRevenue />}></Route>
+          <Route path="tools" element={<InstructorTools />}></Route>
+          <Route path="help" element={<InstructorHelp />}></Route>
+        </Route>
+
         <Route
           path="/login"
           element={
