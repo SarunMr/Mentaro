@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Bell, 
   User, 
@@ -10,10 +12,12 @@ import {
   CheckCircle
 } from 'lucide-react';
 
-const Navbar = () => {
+const AdminNavbar = () => {
   const [isAdminView, setIsAdminView] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -67,6 +71,16 @@ const Navbar = () => {
     setNotifications(notifications.map(notification => 
       notification.id === id ? { ...notification, read: true } : notification
     ));
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const getUserInitials = (username) => {
+    if (!username) return 'A';
+    return username.charAt(0).toUpperCase();
   };
 
   const markAllAsRead = () => {
@@ -229,14 +243,20 @@ const Navbar = () => {
             onClick={toggleDropdown}
             className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
           >
-            <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-              <User className="h-4 w-4" />
+            <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
+              {getUserInitials(user?.username)}
             </div>
             <ChevronDown className="h-4 w-4 text-gray-600" />
           </button>
 
           {showDropdown && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+              <div className="px-4 py-2 text-sm font-medium text-gray-900 border-b">
+                {user?.username || 'Admin'}
+              </div>
+              <div className="px-4 py-1 text-xs text-gray-500 border-b">
+                {user?.email || 'admin@example.com'}
+              </div>
               <a
                 href="#"
                 className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -249,12 +269,12 @@ const Navbar = () => {
               >
                 Settings
               </a>
-              <a
-                href="#"
-                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              <button
+                onClick={handleLogout}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 Sign out
-              </a>
+              </button>
             </div>
           )}
         </div>
@@ -263,4 +283,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+export default AdminNavbar;
