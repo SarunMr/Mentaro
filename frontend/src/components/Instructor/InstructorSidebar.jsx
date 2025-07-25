@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   FilePlus2,
   Settings,
@@ -8,14 +8,19 @@ import {
   X,
   LayoutDashboard,
   DollarSign,
+  LogOut,
+  BookOpen,
 } from "lucide-react";
 
 import justLogo from "../../assets/images/justLogo.png";
+import { useAuth } from "../../contexts/AuthContext";
 
 const InstructorSidebar = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const navigationItems = [
     {
@@ -28,7 +33,11 @@ const InstructorSidebar = () => {
       text: "Add Course",
       path: "/instructor/course",
     },
- 
+    {
+      icon: <BookOpen className="h-5 w-5" />,
+      text: "My Courses",
+      path: "/instructor/courses",
+    },
     {
       icon: <DollarSign className="h-5 w-5" />,
       text: "Revenue",
@@ -47,6 +56,11 @@ const InstructorSidebar = () => {
   ];
 
   const handleNavClick = () => setSidebarOpen(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   // Determine if sidebar is expanded
   const isSidebarExpanded = isHovered || sidebarOpen;
@@ -124,6 +138,19 @@ const InstructorSidebar = () => {
               />
             ))}
           </ul>
+        </div>
+
+        {/* Logout Button */}
+        <div className="p-2 border-t border-gray-700">
+          <button
+            onClick={handleLogout}
+            className={`flex ${isSidebarExpanded ? "flex-row" : "flex-col"} items-center ${
+              isSidebarExpanded ? "" : "justify-center"
+            } w-full p-2 rounded-md transition-colors hover:bg-gray-700 text-red-400 hover:text-red-300`}
+          >
+            <LogOut className="h-5 w-5" />
+            {isSidebarExpanded && <span className="ml-3">Logout</span>}
+          </button>
         </div>
       </div>
     </>
