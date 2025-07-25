@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MentaroNavbar from './../../components/Student/StudentNavbar.jsx';
 import Navbar from './../../components/Student/Navbar.jsx';
 import { 
@@ -12,6 +12,8 @@ import {
   Calendar,
   Download
 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { authAPI, enrollmentAPI } from '../../utils/apiClient';
 
 // Utility to generate a random username
 function generateUsername() {
@@ -27,14 +29,14 @@ function generateUsername() {
 const SettingsPage = () => {
   const [settings, setSettings] = useState({
     profile: {
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@example.com',
-      bio: 'Passionate learner interested in web development and data science.',
-      username: generateUsername()
+      firstName: '',
+      lastName: '',
+      email: '',
+      bio: '',
+      username: ''
     },
     security: {
-      passwordLastChanged: '2024-01-15'
+      passwordLastChanged: ''
     },
     billing: {
       paymentMethod: {
@@ -43,10 +45,10 @@ const SettingsPage = () => {
         expiry: '12/26'
       },
       billingAddress: {
-        street: '123 Main St',
-        city: 'New York',
-        state: 'NY',
-        zip: '10001',
+        street: '',
+        city: '',
+        state: '',
+        zip: '',
         country: 'US'
       }
     }
@@ -56,6 +58,57 @@ const SettingsPage = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch user profile
+      const profileResponse = await authAPI.getProfile();
+      if (profileResponse.success) {
+        const profile = profileResponse.data;
+        setSettings(prev => ({
+          ...prev,
+          profile: {
+            firstName: profile.firstName || '',
+            lastName: profile.lastName || '',
+            email: profile.email || '',
+            bio: profile.bio || '',
+            username: profile.username || generateUsername()
+          }
+        }));
+      }
+
+      // Fetch purchase history (enrolled courses)
+      const enrollmentsResponse = await enrollmentAPI.getMyEnrollments();
+      if (enrollmentsResponse.success) {
+        const enrollments = enrollmentsResponse.data;
+        const history = enrollments.map(enrollment => ({
+          id: enrollment._id,
+          course: enrollment.course?.title || 'Unknown Course',
+          date: enrollment.enrollmentDate,
+          amount: enrollment.course?.price || 0,
+          status: enrollment.status === 'completed' ? 'completed' : 'in progress'
+        }));
+        setPurchaseHistory(history);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      setError('Failed to load user data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const updateSetting = (section, key, value) => {
     setSettings(prev => ({
@@ -67,8 +120,31 @@ const SettingsPage = () => {
     }));
   };
 
-  const handleSave = () => {
-    alert('Settings saved successfully!');
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+
+      // Update user profile
+      const updateResponse = await authAPI.updateProfile({
+        firstName: settings.profile.firstName,
+        lastName: settings.profile.lastName,
+        email: settings.profile.email,
+        bio: settings.profile.bio,
+        username: settings.profile.username
+      });
+
+      if (updateResponse.success) {
+        alert('Settings saved successfully!');
+      } else {
+        throw new Error(updateResponse.message || 'Failed to save settings');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      setError('Failed to save settings. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const tabs = [
@@ -77,30 +153,8 @@ const SettingsPage = () => {
     { id: 'billing', label: 'Billing', icon: '💳' }
   ];
 
-  // Purchase history mock data
-  const purchaseHistory = [
-    {
-      id: 1,
-      course: 'Complete React Developer Course',
-      date: '2024-01-15',
-      amount: 99.99,
-      status: 'completed'
-    },
-    {
-      id: 2,
-      course: 'Python Machine Learning Bootcamp',
-      date: '2024-01-10',
-      amount: 129.99,
-      status: 'completed'
-    },
-    {
-      id: 3,
-      course: 'UI/UX Design Masterclass',
-      date: '2024-01-05',
-      amount: 89.99,
-      status: 'completed'
-    }
-  ];
+  // Purchase history from API
+  const [purchaseHistory, setPurchaseHistory] = useState([]);
 
   const renderProfileSettings = () => (
     <div className="space-y-6">
@@ -350,21 +404,27 @@ const SettingsPage = () => {
         </div>
         
         <div className="space-y-3">
-          {purchaseHistory.map((purchase) => (
-            <div key={purchase.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-900">{purchase.course}</p>
-                <p className="text-sm text-gray-500 flex items-center">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  {new Date(purchase.date).toLocaleDateString()}
-                </p>
+          {purchaseHistory.length > 0 ? (
+            purchaseHistory.map((purchase) => (
+              <div key={purchase.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="font-medium text-gray-900">{purchase.course}</p>
+                  <p className="text-sm text-gray-500 flex items-center">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    {new Date(purchase.date).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-gray-900">${purchase.amount}</p>
+                  <p className="text-sm text-green-600 capitalize">{purchase.status}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-gray-900">${purchase.amount}</p>
-                <p className="text-sm text-green-600 capitalize">{purchase.status}</p>
-              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No purchase history available.
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>
@@ -383,10 +443,32 @@ const SettingsPage = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <MentaroNavbar />
+        <Navbar />
+        <div className="max-w-6xl mx-auto py-6 px-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-lg text-gray-600">Loading...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <MentaroNavbar />
       <Navbar />
+      
+      {error && (
+        <div className="max-w-6xl mx-auto px-6 pt-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        </div>
+      )}
       
       <div className="max-w-6xl mx-auto py-6 px-6">
         <div className="mb-8">
@@ -423,9 +505,10 @@ const SettingsPage = () => {
             <div className="mt-6 flex justify-end">
               <button
                 onClick={handleSave}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                disabled={saving}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save Changes
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>

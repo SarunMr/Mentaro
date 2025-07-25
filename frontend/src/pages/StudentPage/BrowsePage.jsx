@@ -1,7 +1,10 @@
 
-import React, { useState } from 'react';
-import MentaroNavbar from '../components/MentaroNavbar';
-import Navbar from '../components/Navbar';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import MentaroNavbar from '../../components/Mentaronavbar';
+import Navbar from '../../components/Student/Navbar';
+import { userAPI, enrollmentAPI } from '../../utils/apiClient';
+import { getThumbnailUrl } from '../../utils/imageUtils';
 import { 
   Search, 
   Filter, 
@@ -23,178 +26,46 @@ import {
 } from 'lucide-react';
 
 const BrowseCourses = () => {
-  const [courses] = useState([
-    {
-      id: 1,
-      title: "Complete React Developer Course 2025",
-      instructor: "John Smith",
-      icon: <Code className="w-16 h-16 text-blue-600" />,
-      price: 99.99,
-      originalPrice: 129.99,
-      rating: 4.8,
-      reviews: 15420,
-      duration: "40 hours",
-      level: "Beginner",
-      category: "web-development",
-      badge: "Bestseller",
-      description: "Master React from basics to advanced concepts with real-world projects",
-      onSale: true,
-      isEnrolled: false
-    },
-    {
-      id: 2,
-      title: "Advanced JavaScript Fundamentals",
-      instructor: "Sarah Johnson",
-      icon: <BookOpen className="w-16 h-16 text-green-600" />,
-      price: 79.99,
-      originalPrice: 79.99,
-      rating: 4.6,
-      reviews: 12350,
-      duration: "30 hours",
-      level: "Intermediate",
-      category: "programming",
-      badge: "New",
-      description: "Deep dive into JavaScript concepts and modern ES6+ features",
-      onSale: false,
-      isEnrolled: true
-    },
-    {
-      id: 3,
-      title: "Python Machine Learning Bootcamp",
-      instructor: "Dr. Amanda Wilson",
-      icon: <Brain className="w-16 h-16 text-yellow-600" />,
-      price: 129.99,
-      originalPrice: 159.99,
-      rating: 4.9,
-      reviews: 8920,
-      duration: "60 hours",
-      level: "Advanced",
-      category: "data-science",
-      badge: "Popular",
-      description: "Learn machine learning with Python, pandas, and scikit-learn",
-      onSale: true,
-      isEnrolled: false
-    },
-    {
-      id: 4,
-      title: "UI/UX Design Masterclass",
-      instructor: "Emily Davis",
-      icon: <Palette className="w-16 h-16 text-purple-600" />,
-      price: 89.99,
-      originalPrice: 89.99,
-      rating: 4.7,
-      reviews: 6789,
-      duration: "35 hours",
-      level: "Beginner",
-      category: "design",
-      badge: "Bestseller",
-      description: "Create beautiful and user-friendly interfaces with modern design principles",
-      onSale: false,
-      isEnrolled: false
-    },
-    {
-      id: 5,
-      title: "Full Stack Web Development",
-      instructor: "Carlos Rodriguez",
-      icon: <Server className="w-16 h-16 text-red-600" />,
-      price: 149.99,
-      originalPrice: 199.99,
-      rating: 4.5,
-      reviews: 5432,
-      duration: "80 hours",
-      level: "Intermediate",
-      category: "web-development",
-      badge: "Popular",
-      description: "Build complete web applications from frontend to backend",
-      onSale: true,
-      isEnrolled: false
-    },
-    {
-      id: 6,
-      title: "Data Science with Python",
-      instructor: "Dr. Lisa Zhang",
-      icon: <Database className="w-16 h-16 text-indigo-600" />,
-      price: 119.99,
-      originalPrice: 119.99,
-      rating: 4.8,
-      reviews: 7654,
-      duration: "50 hours",
-      level: "Intermediate",
-      category: "data-science",
-      badge: "New",
-      description: "Analyze and visualize data using Python, NumPy, and Matplotlib",
-      onSale: false,
-      isEnrolled: false
-    },
-    {
-      id: 7,
-      title: "Mobile App Development with React Native",
-      instructor: "Michael Chen",
-      icon: <Smartphone className="w-16 h-16 text-cyan-600" />,
-      price: 109.99,
-      originalPrice: 139.99,
-      rating: 4.6,
-      reviews: 4321,
-      duration: "45 hours",
-      level: "Intermediate",
-      category: "mobile-development",
-      badge: "Popular",
-      description: "Create cross-platform mobile apps with React Native",
-      onSale: true,
-      isEnrolled: false
-    },
-    {
-      id: 8,
-      title: "Digital Marketing Fundamentals",
-      instructor: "Rachel Green",
-      icon: <TrendingUp className="w-16 h-16 text-pink-600" />,
-      price: 69.99,
-      originalPrice: 89.99,
-      rating: 4.4,
-      reviews: 3210,
-      duration: "25 hours",
-      level: "Beginner",
-      category: "marketing",
-      badge: "New",
-      description: "Master digital marketing strategies and social media marketing",
-      onSale: true,
-      isEnrolled: false
-    },
-    {
-      id: 9,
-      title: "Photography for Beginners",
-      instructor: "David Wilson",
-      icon: <Camera className="w-16 h-16 text-orange-600" />,
-      price: 59.99,
-      originalPrice: 59.99,
-      rating: 4.3,
-      reviews: 2876,
-      duration: "20 hours",
-      level: "Beginner",
-      category: "photography",
-      badge: "Bestseller",
-      description: "Learn photography basics and composition techniques",
-      onSale: false,
-      isEnrolled: false
-    },
-    {
-      id: 10,
-      title: "Frontend Development with Vue.js",
-      instructor: "Maria Santos",
-      icon: <Monitor className="w-16 h-16 text-green-700" />,
-      price: 94.99,
-      originalPrice: 124.99,
-      rating: 4.7,
-      reviews: 1987,
-      duration: "38 hours",
-      level: "Intermediate",
-      category: "web-development",
-      badge: "New",
-      description: "Build modern web applications with Vue.js and Vuex",
-      onSale: true,
-      isEnrolled: false
+  const navigate = useNavigate();
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    fetchCoursesAndCategories();
+  }, []);
+
+  const fetchCoursesAndCategories = async () => {
+    try {
+      setLoading(true);
+      const [coursesResponse, categoriesResponse] = await Promise.all([
+        userAPI.searchCourses(),
+        userAPI.getCategories()
+      ]);
+      
+      console.log('Courses Response:', coursesResponse);
+      console.log('Categories Response:', categoriesResponse);
+      
+      const coursesData = coursesResponse.data?.data?.courses || [];
+      console.log('Processed Courses Data:', coursesData);
+      setCourses(coursesData);
+      
+      const categoriesData = categoriesResponse.data?.data || [];
+      console.log('Categories Data:', categoriesData);
+      const formattedCategories = Array.isArray(categoriesData) ? categoriesData.map(cat => ({
+        value: cat,
+        label: cat.charAt(0).toUpperCase() + cat.slice(1)
+      })) : [];
+      console.log('Formatted Categories:', formattedCategories);
+      setCategories([{ value: 'all', label: 'All Categories' }, ...formattedCategories]);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setError('Failed to load courses');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -203,17 +74,37 @@ const BrowseCourses = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [cartItems, setCartItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
 
-  const categories = [
-    { value: 'all', label: 'All Categories' },
-    { value: 'web-development', label: 'Web Development' },
-    { value: 'data-science', label: 'Data Science' },
-    { value: 'programming', label: 'Programming' },
-    { value: 'design', label: 'Design' },
-    { value: 'mobile-development', label: 'Mobile Development' },
-    { value: 'marketing', label: 'Marketing' },
-    { value: 'photography', label: 'Photography' }
-  ];
+  useEffect(() => {
+    fetchUserWishlistAndCart();
+  }, []);
+
+  const fetchUserWishlistAndCart = async () => {
+    try {
+      const [wishlistResponse, cartResponse, enrolledResponse] = await Promise.all([
+        userAPI.getWishlist(),
+        userAPI.getCart(),
+        userAPI.getEnrolledCourses()
+      ]);
+      
+      if (wishlistResponse.data?.success) {
+        setWishlistItems(wishlistResponse.data.data || []);
+      }
+      
+      if (cartResponse.data?.success) {
+        setCartItems(cartResponse.data.data?.courses || []);
+      }
+      
+      if (enrolledResponse.data?.success) {
+        setEnrolledCourses(enrolledResponse.data.data?.courses || []);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+
 
   const levels = [
     { value: 'all', label: 'All Levels' },
@@ -230,62 +121,89 @@ const BrowseCourses = () => {
     { value: 'newest', label: 'Newest First' }
   ];
 
-  const filteredCourses = courses.filter(course => {
-    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.instructor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.description.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredCourses = Array.isArray(courses) ? courses.filter(course => {
+    const matchesSearch = course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         course.instructor?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         course.instructor?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         course.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || course.category === selectedCategory;
     const matchesLevel = selectedLevel === 'all' || course.level === selectedLevel;
     
+    console.log('Course filter check:', {
+      course: course.title,
+      matchesSearch,
+      matchesCategory,
+      matchesLevel,
+      searchTerm,
+      selectedCategory,
+      selectedLevel
+    });
+    
     return matchesSearch && matchesCategory && matchesLevel;
-  });
+  }) : [];
+  
+  console.log('All courses:', courses);
+  console.log('Filtered courses:', filteredCourses);
 
   const sortedCourses = [...filteredCourses].sort((a, b) => {
     switch (sortBy) {
       case 'rating':
-        return b.rating - a.rating;
+        return (b.rating?.average || 0) - (a.rating?.average || 0);
       case 'price-low':
-        return a.price - b.price;
+        return (a.price || 0) - (b.price || 0);
       case 'price-high':
-        return b.price - a.price;
+        return (b.price || 0) - (a.price || 0);
       case 'newest':
-        return b.id - a.id;
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
       default:
-        return b.reviews - a.reviews;
+        return (b.totalStudents || 0) - (a.totalStudents || 0);
     }
   });
+  
+  console.log('Sorted courses:', sortedCourses);
+  console.log('Sort by:', sortBy);
 
-  const addToCart = (course) => {
-    if (course.isEnrolled) {
-      alert(`You are already enrolled in "${course.title}"`);
+  const addToCart = async (courseId) => {
+    if (isInCart(courseId)) {
+      console.log('Course already in cart, skipping API call');
       return;
     }
     
-    if (cartItems.find(item => item.id === course.id)) {
-      alert(`"${course.title}" is already in your cart`);
-      return;
+    try {
+      await userAPI.addToCart(courseId);
+      await fetchUserWishlistAndCart();
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      await fetchUserWishlistAndCart();
     }
-    
-    setCartItems([...cartItems, course]);
-    alert(`Added "${course.title}" to cart!`);
   };
 
-  const addToWishlist = (course) => {
-    if (wishlistItems.find(item => item.id === course.id)) {
-      alert(`"${course.title}" is already in your wishlist`);
-      return;
+  const addToWishlist = async (courseId) => {
+    try {
+      if (isInWishlist(courseId)) {
+        await userAPI.removeFromWishlist(courseId);
+      } else {
+        await userAPI.addToWishlist(courseId);
+      }
+      // Refresh wishlist to ensure frontend state matches backend
+      await fetchUserWishlistAndCart();
+    } catch (error) {
+      console.error('Error updating wishlist:', error);
+      // If there's an error, still refresh to sync state
+      await fetchUserWishlistAndCart();
     }
-    
-    setWishlistItems([...wishlistItems, course]);
-    alert(`Added "${course.title}" to wishlist!`);
   };
 
   const isInCart = (courseId) => {
-    return cartItems.some(item => item.id === courseId);
+    return cartItems.some(item => item._id === courseId || item.course?._id === courseId);
   };
 
   const isInWishlist = (courseId) => {
-    return wishlistItems.some(item => item.id === courseId);
+    return wishlistItems.some(item => item._id === courseId);
+  };
+
+  const isEnrolled = (courseId) => {
+    return enrolledCourses.some(course => course._id === courseId || course.id === courseId);
   };
 
   return (
@@ -417,7 +335,24 @@ const BrowseCourses = () => {
         </div>
 
         {/* Course Grid */}
-        {sortedCourses.length === 0 ? (
+        {loading ? (
+          <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading courses...</p>
+          </div>
+        ) : error ? (
+          <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
+            <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Error loading courses</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button
+              onClick={fetchCoursesAndCategories}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : sortedCourses.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border p-12 text-center">
             <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No courses found</h3>
@@ -426,10 +361,14 @@ const BrowseCourses = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {sortedCourses.map((course) => (
-              <div key={course.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
+              <div key={course._id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
                 <div className="relative">
                   <div className="w-full h-48 bg-gray-50 rounded-t-lg flex items-center justify-center border-b border-gray-200">
-                    {course.icon}
+                    {course.thumbnail ? (
+                      <img src={getThumbnailUrl(course.thumbnail)} alt={course.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <BookOpen className="h-16 w-16 text-blue-600" />
+                    )}
                   </div>
                   
                   {course.badge && (
@@ -444,27 +383,11 @@ const BrowseCourses = () => {
                     </div>
                   )}
 
-                  {course.onSale && (
-                    <div className="absolute top-3 right-3">
-                      <span className="px-2 py-1 bg-red-500 text-white text-xs font-medium rounded-full">
-                        Sale
-                      </span>
-                    </div>
-                  )}
-
-                  {course.isEnrolled && (
-                    <div className="absolute bottom-3 left-3">
-                      <span className="px-2 py-1 bg-green-500 text-white text-xs font-medium rounded-full">
-                        Enrolled
-                      </span>
-                    </div>
-                  )}
-
                   <button
-                    onClick={() => addToWishlist(course)}
+                    onClick={() => addToWishlist(course._id)}
                     className="absolute bottom-3 right-3 p-2 bg-white rounded-full shadow-md hover:bg-gray-50 transition-colors"
                   >
-                    <Heart className={`h-4 w-4 ${isInWishlist(course.id) ? 'text-red-500 fill-current' : 'text-gray-600'}`} />
+                    <Heart className={`h-4 w-4 ${isInWishlist(course._id) ? 'text-red-500 fill-current' : 'text-gray-600'}`} />
                   </button>
                 </div>
 
@@ -473,15 +396,15 @@ const BrowseCourses = () => {
                   
                   <div className="flex items-center text-sm text-gray-600 mb-3">
                     <User className="h-4 w-4 mr-2" />
-                    <span>{course.instructor}</span>
+                    <span>{course.instructor?.firstName} {course.instructor?.lastName}</span>
                   </div>
 
                   <p className="text-sm text-gray-600 mb-3 line-clamp-2">{course.description}</p>
 
                   <div className="flex items-center mb-3">
                     <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                    <span className="text-sm font-medium text-gray-900">{course.rating}</span>
-                    <span className="text-sm text-gray-500 ml-1">({course.reviews.toLocaleString()})</span>
+                    <span className="text-sm font-medium text-gray-900">{course.rating?.average || 0}</span>
+                    <span className="text-sm text-gray-500 ml-1">({course.rating?.count || 0})</span>
                   </div>
 
                   <div className="flex items-center text-sm text-gray-600 mb-4">
@@ -494,33 +417,29 @@ const BrowseCourses = () => {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
                       <span className="text-xl font-bold text-gray-900">${course.price}</span>
-                      {course.originalPrice > course.price && (
-                        <span className="text-sm text-gray-500 line-through ml-2">${course.originalPrice}</span>
-                      )}
                     </div>
-                    {course.onSale && (
-                      <span className="text-sm text-green-600 font-medium">
-                        {Math.round((1 - course.price / course.originalPrice) * 100)}% OFF
-                      </span>
-                    )}
                   </div>
 
-                  {course.isEnrolled ? (
-                    <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium cursor-not-allowed">
-                      Already Enrolled
+                  {isEnrolled(course._id) ? (
+                    <button
+                      onClick={() => navigate('/my-courses')}
+                      className="w-full py-2 px-4 rounded-lg font-medium flex items-center justify-center transition-colors bg-green-600 text-white hover:bg-green-700"
+                    >
+                      <BookOpen className="h-4 w-4 mr-2" />
+                      Go to Course
                     </button>
                   ) : (
                     <button
-                      onClick={() => addToCart(course)}
+                      onClick={() => addToCart(course._id)}
                       className={`w-full py-2 px-4 rounded-lg font-medium flex items-center justify-center transition-colors ${
-                        isInCart(course.id) 
+                        isInCart(course._id) 
                           ? 'bg-gray-600 text-white cursor-not-allowed' 
                           : 'bg-blue-600 text-white hover:bg-blue-700'
                       }`}
-                      disabled={isInCart(course.id)}
+                      disabled={isInCart(course._id)}
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
-                      {isInCart(course.id) ? 'Added to Cart' : 'Add to Cart'}
+                      {isInCart(course._id) ? 'Added to Cart' : 'Add to Cart'}
                     </button>
                   )}
                 </div>
