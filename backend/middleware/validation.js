@@ -1,4 +1,3 @@
-
 const { body, param, query, validationResult } = require('express-validator');
 
 const handleValidationErrors = (req, res, next) => {

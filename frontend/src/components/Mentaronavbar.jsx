@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import mentaroLogo from "./../assets/images/mentarologo.png";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -17,6 +18,7 @@ const MentaroNavbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout, isAuthenticated } = useAuth();
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -36,7 +38,21 @@ const MentaroNavbar = () => {
   const openSignup = () => {
     navigate("/signup", { state: { backgroundLocation: location } });
   };
-  const user = false;
+
+  // Navigate to /instructor-auth with backgroundLocation state to show modal
+  const openInstructorAuth = () => {
+    navigate("/instructor-auth", { state: { backgroundLocation: location } });
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const getUserInitials = (username) => {
+    if (!username) return "U";
+    return username.charAt(0).toUpperCase();
+  };
 
   return (
     <>
@@ -66,21 +82,23 @@ const MentaroNavbar = () => {
         </form>
 
         {/* Navigation Items */}
-        {user ? (
+        {isAuthenticated() ? (
           <div className="flex items-center space-x-6">
-            <a href="#" className="text-gray-700 hover:text-blue-600">
+            <button 
+              onClick={openInstructorAuth}
+              className="text-gray-700 hover:text-blue-600"
+            >
               Become Instructor
-            </a>
+            </button>
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <Avatar>
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>CN</AvatarFallback>
+                  <AvatarFallback>{getUserInitials(user?.username)}</AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuLabel>Username</DropdownMenuLabel>
-                <DropdownMenuLabel>useremail@gmail.com</DropdownMenuLabel>
+                <DropdownMenuLabel>{user?.username || "User"}</DropdownMenuLabel>
+                <DropdownMenuLabel>{user?.email || "user@example.com"}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Link to="my-learning">My Courses</Link>
@@ -93,15 +111,18 @@ const MentaroNavbar = () => {
                   <Link to="profile">Account Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Logout</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         ) : (
           <div className="flex items-center space-x-6">
-            <a href="#" className="text-gray-700 hover:text-blue-600">
+            <button 
+              onClick={openInstructorAuth}
+              className="text-gray-700 hover:text-blue-600"
+            >
               Become Instructor
-            </a>
+            </button>
             <button
               onClick={openLogin}
               className="text-gray-700 hover:text-blue-600"

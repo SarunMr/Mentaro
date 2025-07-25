@@ -15,7 +15,7 @@ const Courses = () => {
             ? Array.from({ length: 8 }).map((_, index) => (
                 <CourseSkeleton key={index} />
               ))
-            : courses.map((course, index) => <Course/>)}
+            : courses.map((course, index) => <Course key={index}/>)}
         </div>
       </div>
     </div>

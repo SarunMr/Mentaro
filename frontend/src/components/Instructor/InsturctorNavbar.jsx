@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   Bell, 
+  User, 
   ChevronDown,
   GraduationCap,
   Shield,
