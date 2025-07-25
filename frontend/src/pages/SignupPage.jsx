@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import { useAuth } from "../contexts/AuthContext";
+import { authAPI } from "../utils/apiClient";
 import { MdEmail } from "react-icons/md";
 import { FaRegCircleUser } from "react-icons/fa6";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
@@ -12,7 +13,8 @@ const SignupPage = ({ onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [form, setForm] = useState({
-    username: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -23,6 +25,7 @@ const SignupPage = ({ onClose }) => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
 
   const handleSwitchToLogin = () => {
     navigate("/login", {
@@ -34,10 +37,16 @@ const SignupPage = ({ onClose }) => {
 
   const validate = () => {
     const newErrors = {};
-    if (!form.username.trim()) {
-      newErrors.username = "Username is required";
-    } else if (/\s/.test(form.username)) {
-      newErrors.username = "Username must not contain spaces";
+    if (!form.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    } else if (form.firstName.length < 2 || form.firstName.length > 50) {
+      newErrors.firstName = "First name must be between 2 and 50 characters";
+    }
+
+    if (!form.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    } else if (form.lastName.length < 2 || form.lastName.length > 50) {
+      newErrors.lastName = "Last name must be between 2 and 50 characters";
     }
 
     if (!form.email.trim()) {
@@ -51,8 +60,10 @@ const SignupPage = ({ onClose }) => {
 
     if (!form.password) {
       newErrors.password = "Password is required";
-    } else if (form.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
+    } else if (form.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters long";
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.password)) {
+      newErrors.password = "Password must contain at least one uppercase letter, one lowercase letter, and one number";
     }
 
     if (!form.confirmPassword) {
@@ -70,44 +81,73 @@ const SignupPage = ({ onClose }) => {
     setApiError(""); // clear API error on new input
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  if (!validate()) return;
-
-  setIsLoading(true);
-  setApiError("");
-
-  try {
-    const res = await axios.post("http://localhost:5001/api/auth/register", {
-      username: form.username,
-      email: form.email,
-      password: form.password,
-    });
-
-    // Registration successful - you can navigate to login or dashboard
-    navigate("/login", { replace: true });
-  } catch (error) {
-    console.error("Registration error:", error); // Add this for debugging
-    
-    // Handle errors from backend
-    if (error.response) {
-      // Server responded with error status
-      const errorMessage = error.response.data?.message || 
-                          error.response.data?.error || 
-                          `Registration failed: ${error.response.status} ${error.response.statusText}`;
-      setApiError(errorMessage);
-    } else if (error.request) {
-      // Request was made but no response received
-      setApiError("Unable to connect to server. Please check your internet connection.");
-    } else {
-      // Something else happened
-      setApiError("An unexpected error occurred. Please try again.");
+const getDefaultPath = (role) => {
+    switch (role) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'instructor':
+        return '/instructor/dashboard';
+      case 'student':
+      default:
+        return '/dashboard';
     }
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validate()) return;
+
+    setIsLoading(true);
+    setApiError("");
+
+    try {
+      // Register the user
+      const registerRes = await authAPI.register({
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        password: form.password,
+      });
+
+      // Auto-login after successful registration
+      const loginRes = await authAPI.login('student', {
+        email: form.email,
+        password: form.password,
+      });
+
+      if (loginRes.data.success) {
+        // Use the login function from AuthContext
+        login(loginRes.data.token, loginRes.data.user);
+        
+        // Navigate to appropriate dashboard
+        const defaultPath = getDefaultPath(loginRes.data.user.role);
+        navigate(defaultPath, { replace: true });
+        
+        // Close modal if it's open
+        if (onClose) onClose();
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      
+      // Handle errors from backend
+      if (error.response) {
+        // Server responded with error status
+        const errorMessage = error.response.data?.message || 
+                            error.response.data?.error || 
+                            `Registration failed: ${error.response.status} ${error.response.statusText}`;
+        setApiError(errorMessage);
+      } else if (error.request) {
+        // Request was made but no response received
+        setApiError("Unable to connect to server. Please check your internet connection.");
+      } else {
+        // Something else happened
+        setApiError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Overlays onClose={onClose} leftImage={loginSideImage}>
@@ -142,25 +182,47 @@ const handleSubmit = async (e) => {
       )}
 
       <form className="space-y-4" onSubmit={handleSubmit}>
-        {/* Username */}
+        {/* First Name */}
         <div className="relative">
           <input
             type="text"
-            name="username"
-            value={form.username}
+            name="firstName"
+            value={form.firstName}
             onChange={handleChange}
             className={`w-full pr-10 pl-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-              errors.username
+              errors.firstName
                 ? "focus:ring-red-400 border-red-500"
                 : "focus:ring-blue-400"
             } text-gray-700`}
-            placeholder="Username"
+            placeholder="First Name"
           />
           <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
             <FaRegCircleUser size={22} />
           </span>
-          {errors.username && (
-            <p className="text-red-500 text-sm mt-1">{errors.username}</p>
+          {errors.firstName && (
+            <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
+          )}
+        </div>
+
+        {/* Last Name */}
+        <div className="relative">
+          <input
+            type="text"
+            name="lastName"
+            value={form.lastName}
+            onChange={handleChange}
+            className={`w-full pr-10 pl-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
+              errors.lastName
+                ? "focus:ring-red-400 border-red-500"
+                : "focus:ring-blue-400"
+            } text-gray-700`}
+            placeholder="Last Name"
+          />
+          <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+            <FaRegCircleUser size={22} />
+          </span>
+          {errors.lastName && (
+            <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
           )}
         </div>
 

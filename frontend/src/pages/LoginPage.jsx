@@ -1,17 +1,23 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom"; import { MdEmail } from "react-icons/md";
+import { useNavigate, useLocation } from "react-router-dom";
+import { MdEmail } from "react-icons/md";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import loginSideImage from "../assets/images/Forloginfront.png";
 import Mentarolgo from "./../assets/images/mentarologo.png";
 import Overlays from "./../components/Overlays.jsx";
+import { useAuth } from "../contexts/AuthContext";
+import { authAPI } from "../utils/apiClient";
 
 const LoginPage = ({ onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [userType, setUserType] = useState("student");
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
 
   // Switch to signup overlay with same background
   const handleSwitchToSignup = () => {
@@ -21,20 +27,57 @@ const LoginPage = ({ onClose }) => {
       },
     });
   };
-  // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Clear previous errors
+    setError("");
+    setLoading(true);
 
-    // Simple validation - only allow ayuz@gmail.com with password 1234
-    if (email === "ayuz@gmail.com" && password === "1234") {
-      // Successful login - navigate to dashboard
-      navigate("/dashboard", { state: {}, replace: true });
-    } else {
-      // Show error message
-      setError(
-        "Invalid email or password. Use ayuz@gmail.com and password 1234",
-      );
+    try {
+      const response = await authAPI.login(userType, {
+        email,
+        password,
+      });
+
+      if (response.data.success) {
+        console.log('Login response:', response.data);
+        console.log('User role:', response.data.user.role);
+        
+        login(response.data.token, response.data.user);
+        
+        if (onClose) onClose();
+        
+        setTimeout(() => {
+          const redirectPath = location.state?.from?.pathname || getDefaultPath(response.data.user.role);
+          console.log('Redirect path:', redirectPath);
+          navigate(redirectPath, { replace: true });
+        }, 100);
+      } else {
+        setError(response.data.message || "Login failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      if (error.response) {
+        setError(error.response.data?.message || "Login failed");
+      } else if (error.request) {
+        setError("Unable to connect to server. Please check your internet connection.");
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDefaultPath = (role) => {
+    switch (role) {
+      case "admin":
+        return "/admin/dashboard";
+      case "instructor":
+        return "/instructor/dashboard";
+      case "student":
+        return "/dashboard";
+      default:
+        return "/";
     }
   };
 
@@ -47,6 +90,45 @@ const LoginPage = ({ onClose }) => {
       <p className="mb-4 text-gray-500 text-sm">
         Join us and get more benefits. We promise to keep your data safely.
       </p>
+
+      {/* User Type Selection */}
+      <div className="flex justify-center mb-4">
+        <div className="flex bg-gray-100 p-1 rounded-lg w-full">
+          <button
+            type="button"
+            className={`flex-1 py-2 px-4 rounded-md font-medium text-sm transition ${
+              userType === "student"
+                ? "bg-blue-500 text-white shadow"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+            onClick={() => setUserType("student")}
+          >
+            Student
+          </button>
+          <button
+            type="button"
+            className={`flex-1 py-2 px-4 rounded-md font-medium text-sm transition ${
+              userType === "instructor"
+                ? "bg-blue-500 text-white shadow"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+            onClick={() => setUserType("instructor")}
+          >
+            Instructor
+          </button>
+          <button
+            type="button"
+            className={`flex-1 py-2 px-4 rounded-md font-medium text-sm transition ${
+              userType === "admin"
+                ? "bg-blue-500 text-white shadow"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+            onClick={() => setUserType("admin")}
+          >
+            Admin
+          </button>
+        </div>
+      </div>
 
       {/* Tabs */}
       <div className="flex justify-center">
@@ -125,9 +207,10 @@ const LoginPage = ({ onClose }) => {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+          disabled={loading}
+          className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
     </Overlays>
