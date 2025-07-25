@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Users,
@@ -8,34 +9,104 @@ import {
   UserPlus,
   Award,
   BarChart3,
+  Loader2,
 } from "lucide-react";
+import axios from "axios";
+import { API_ENDPOINTS } from "@/config/api";
 
 export default function AdminDashboard() {
-  // Mock data - replace with real data from your API
-  const stats = {
-    instructors: 24,
-    students: 1247,
-    courses: 89,
-    revenue: 45600,
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        API_ENDPOINTS.PAYMENTS.ADMIN_ANALYTICS,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      if (response.data.success) {
+        setAnalytics(response.data.analytics);
+      }
+    } catch (err) {
+      console.error('Error fetching analytics:', err);
+      setError('Failed to load analytics data');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const topCourses = [
-    { name: "React for Beginners", students: 156, rating: 4.8 },
-    { name: "Advanced JavaScript", students: 134, rating: 4.9 },
-    { name: "UI/UX Design", students: 98, rating: 4.7 },
-  ];
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
 
-  const recentActivity = [
-    { action: "New course published", time: "2 hours ago", user: "John Doe" },
-    { action: "Student enrolled", time: "4 hours ago", user: "Jane Smith" },
-    { action: "Course completed", time: "6 hours ago", user: "Mike Johnson" },
-  ];
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
-  const recentUsers = [
-    { name: "Alice Wilson", role: "Student", joined: "Today" },
-    { name: "Bob Brown", role: "Instructor", joined: "Yesterday" },
-    { name: "Carol Davis", role: "Student", joined: "2 days ago" },
-  ];
+  const getStats = () => {
+    if (!analytics) return { instructors: 0, students: 0, courses: 0, revenue: 0 };
+    
+    const instructorCount = analytics.userStats?.find(stat => stat._id === 'instructor')?.count || 0;
+    const studentCount = analytics.userStats?.find(stat => stat._id === 'student')?.count || 0;
+    
+    return {
+      instructors: instructorCount,
+      students: studentCount,
+      courses: analytics.courseCount || 0,
+      revenue: analytics.revenue?.adminRevenue || 0,
+    };
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen bg-gray-50 p-4 sm:p-8 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span>Loading analytics...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full min-h-screen bg-gray-50 p-4 sm:p-8 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={fetchAnalytics}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const stats = getStats();
+  const topCourses = analytics?.topCourses || [];
+  const recentTransactions = analytics?.recentTransactions || [];
 
   return (
     <div className="w-full min-h-screen bg-gray-50 p-4 sm:p-8">
@@ -130,11 +201,11 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-orange-900 mb-1">
-              ${stats.revenue.toLocaleString()}
+              {formatCurrency(stats.revenue)}
             </div>
             <div className="flex items-center text-sm text-orange-600">
               <TrendingUp className="w-4 h-4 mr-1" />
-              <span>+18% from last month</span>
+              <span>Admin Commission (10%)</span>
             </div>
           </CardContent>
         </Card>
@@ -152,88 +223,122 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-4">
-              {topCourses.map((course, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">
-                      {course.name}
+              {topCourses.length > 0 ? (
+                topCourses.map((course, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        {course.title}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {course.enrollments} enrollments • {formatCurrency(course.adminRevenue)} earned
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600">
-                      {course.students} students
+                    <div className="flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">
+                      <span>{formatCurrency(course.totalRevenue)}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm">
-                    <span>★</span>
-                    <span>{course.rating}</span>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-4">
+                  No course data available
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
+        {/* Recent Transactions */}
         <Card className="shadow-lg border-0 bg-white">
           <CardHeader className="bg-gradient-to-r from-green-50 to-blue-50 rounded-t-2xl">
             <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
               <Activity className="w-6 h-6 text-green-500" />
-              Recent Activity
+              Recent Transactions
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-4">
-              {recentActivity.map((activity, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">
-                      {activity.action}
+              {recentTransactions.length > 0 ? (
+                recentTransactions.map((transaction, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        {transaction.course?.title || 'Course Purchase'}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {transaction.user?.name} • {formatCurrency(transaction.amount)}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {formatDate(transaction.createdAt)}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600">{activity.user}</div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {activity.time}
+                    <div className="text-sm font-medium text-green-600">
+                      +{formatCurrency(transaction.adminCommission)}
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-4">
+                  No recent transactions
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Recent Users */}
+        {/* Revenue Summary */}
         <Card className="shadow-lg border-0 bg-white">
           <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-t-2xl">
             <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <UserPlus className="w-6 h-6 text-purple-500" />
-              Recent Users
+              <BarChart3 className="w-6 h-6 text-purple-500" />
+              Revenue Summary
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-4">
-              {recentUsers.map((user, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-                >
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold">
-                    {user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">{user.name}</div>
-                    <div className="text-sm text-gray-600">{user.role}</div>
-                  </div>
-                  <div className="text-xs text-gray-500">{user.joined}</div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <div className="font-medium text-gray-900">Total Revenue</div>
+                  <div className="text-sm text-gray-600">All transactions</div>
                 </div>
-              ))}
+                <div className="text-lg font-bold text-gray-900">
+                  {formatCurrency(analytics?.revenue?.totalRevenue || 0)}
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div className="flex-1">
+                  <div className="font-medium text-green-900">Admin Commission</div>
+                  <div className="text-sm text-green-600">10% of all sales</div>
+                </div>
+                <div className="text-lg font-bold text-green-900">
+                  {formatCurrency(analytics?.revenue?.adminRevenue || 0)}
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                <div className="flex-1">
+                  <div className="font-medium text-blue-900">Instructor Earnings</div>
+                  <div className="text-sm text-blue-600">90% of all sales</div>
+                </div>
+                <div className="text-lg font-bold text-blue-900">
+                  {formatCurrency(analytics?.revenue?.instructorRevenue || 0)}
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
+                <div className="flex-1">
+                  <div className="font-medium text-orange-900">Total Transactions</div>
+                  <div className="text-sm text-orange-600">Completed payments</div>
+                </div>
+                <div className="text-lg font-bold text-orange-900">
+                  {analytics?.revenue?.totalTransactions || 0}
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

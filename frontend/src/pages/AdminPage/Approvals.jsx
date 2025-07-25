@@ -1,58 +1,82 @@
-import React, { useState } from "react";
-import { Check, X, Eye, BookOpen, FileText, Video, Clock, User, Tag } from "lucide-react";
-
-// Example course data. Replace with your actual data.
-const mockCourses = [
-  {
-    id: 1,
-    title: "Intro to React",
-    instructor: "Alice Doe",
-    category: "Programming",
-    level: "Beginner",
-    price: 20,
-    description: "Learn the basics of React including components, state, and props.",
-    requirements: ["Basic JavaScript", "A computer"],
-    objectives: ["Understand components", "Use hooks", "Build simple apps"],
-    chapters: [
-      {
-        title: "Getting Started",
-        lessons: [
-          { title: "What is React?", duration: "10 min", description: "Intro to React" },
-          { title: "Your First Component", duration: "20 min", description: "How to create your first component" },
-        ]
-      }
-    ],
-    notes: ["react_guide.pdf"],
-    thumbnail: null,
-  },
-  {
-    id: 2,
-    title: "Photography Mastery",
-    instructor: "Bob Ray",
-    category: "Photography",
-    level: "Intermediate",
-    price: 0,
-    description: "Take your photos to the next level!",
-    requirements: ["Any camera"],
-    objectives: ["Shoot in manual mode", "Master light"],
-    chapters: [],
-    notes: [],
-    thumbnail: null,
-  }
-];
+import React, { useState, useEffect } from "react";
+import { Check, X, Eye, BookOpen, FileText, Video, Clock, User, Tag, AlertCircle } from "lucide-react";
+import { API_ENDPOINTS } from "@/config/api";
+import axios from "axios";
 
 export default function Approvals() {
-  const [pendingCourses, setPendingCourses] = useState(mockCourses);
+  const [pendingCourses, setPendingCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
 
-  const handleApprove = id => {
-    setPendingCourses(pendingCourses => pendingCourses.filter(c => c.id !== id));
-    setSelectedCourse(null);
+  const fetchPendingCourses = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem('token');
+      const response = await axios.get(API_ENDPOINTS.ADMIN.PENDING_COURSES, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      if (response.data.courses) {
+        setPendingCourses(response.data.courses);
+      }
+    } catch (err) {
+      console.error('Error fetching pending courses:', err);
+      setError(err.response?.data?.message || 'Failed to fetch pending courses');
+    } finally {
+      setLoading(false);
+    }
   };
-  const handleDecline = id => {
-    setPendingCourses(pendingCourses => pendingCourses.filter(c => c.id !== id));
-    setSelectedCourse(null);
+
+  const handleApprove = async (courseId) => {
+    try {
+      setActionLoading(courseId);
+      const token = localStorage.getItem('token');
+      await axios.put(API_ENDPOINTS.ADMIN.APPROVE_COURSE(courseId), {}, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      setPendingCourses(courses => courses.filter(c => c._id !== courseId));
+      setSelectedCourse(null);
+    } catch (err) {
+      console.error('Error approving course:', err);
+      setError(err.response?.data?.message || 'Failed to approve course');
+    } finally {
+      setActionLoading(null);
+    }
   };
+
+  const handleDecline = async (courseId, reason = '') => {
+    try {
+      setActionLoading(courseId);
+      const token = localStorage.getItem('token');
+      await axios.put(API_ENDPOINTS.ADMIN.REJECT_COURSE(courseId), {
+        reason
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
+      setPendingCourses(courses => courses.filter(c => c._id !== courseId));
+      setSelectedCourse(null);
+    } catch (err) {
+      console.error('Error rejecting course:', err);
+      setError(err.response?.data?.message || 'Failed to reject course');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingCourses();
+  }, []);
 
   return (
     <div className="w-full min-h-screen bg-gray-50 py-8 px-4 sm:px-8">
@@ -68,9 +92,36 @@ export default function Approvals() {
           </div>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              <div>
+                <h3 className="text-red-800 font-medium">Error</h3>
+                <p className="text-red-600 text-sm">{error}</p>
+              </div>
+              <button
+                onClick={fetchPendingCourses}
+                className="ml-auto px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Approvals Grid */}
         <div className="grid gap-6">
-          {pendingCourses.length === 0 ? (
+          {loading ? (
+            <div className="bg-white rounded-2xl shadow-sm border p-12 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <BookOpen className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Loading courses...</h3>
+              <p className="text-gray-500">Please wait while we fetch pending approvals</p>
+            </div>
+          ) : pendingCourses.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-sm border p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <BookOpen className="w-8 h-8 text-gray-400" />
@@ -80,7 +131,7 @@ export default function Approvals() {
             </div>
           ) : (
             pendingCourses.map(course => (
-              <div key={course.id} className="bg-white rounded-2xl shadow-sm border hover:shadow-md transition-shadow">
+              <div key={course._id} className="bg-white rounded-2xl shadow-sm border hover:shadow-md transition-shadow">
                 <div className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -88,7 +139,7 @@ export default function Approvals() {
                       <div className="flex items-center gap-4 mb-4">
                         <div className="flex items-center gap-2 text-gray-600">
                           <User className="w-4 h-4" />
-                          <span className="text-sm">{course.instructor}</span>
+                          <span className="text-sm">{course.instructor?.firstName} {course.instructor?.lastName}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Tag className="w-4 h-4 text-blue-500" />
@@ -118,18 +169,20 @@ export default function Approvals() {
                         View Details
                       </button>
                       <button
-                        onClick={() => handleApprove(course.id)}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl transition font-medium"
+                        onClick={() => handleApprove(course._id)}
+                        disabled={actionLoading === course._id}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 disabled:bg-green-200 disabled:cursor-not-allowed text-green-700 rounded-xl transition font-medium"
                       >
                         <Check className="w-4 h-4" />
-                        Approve
+                        {actionLoading === course._id ? 'Processing...' : 'Approve'}
                       </button>
                       <button
-                        onClick={() => handleDecline(course.id)}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl transition font-medium"
+                        onClick={() => handleDecline(course._id)}
+                        disabled={actionLoading === course._id}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 disabled:bg-red-200 disabled:cursor-not-allowed text-red-700 rounded-xl transition font-medium"
                       >
                         <X className="w-4 h-4" />
-                        Decline
+                        {actionLoading === course._id ? 'Processing...' : 'Decline'}
                       </button>
                     </div>
                   </div>
@@ -156,7 +209,7 @@ export default function Approvals() {
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center gap-2 text-gray-600">
                   <User className="w-5 h-5" />
-                  <span className="font-medium">{selectedCourse.instructor}</span>
+                  <span className="font-medium">{selectedCourse.instructor?.firstName} {selectedCourse.instructor?.lastName}</span>
                 </div>
                 <div className="flex gap-2">
                   <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">{selectedCourse.category}</span>
@@ -260,16 +313,18 @@ export default function Approvals() {
 
             <div className="p-8 border-t bg-gray-50 flex gap-4">
               <button
-                onClick={() => handleApprove(selectedCourse.id)}
-                className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl shadow font-semibold text-lg transition flex items-center justify-center gap-2"
+                onClick={() => handleApprove(selectedCourse._id)}
+                disabled={actionLoading === selectedCourse._id}
+                className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-green-400 disabled:cursor-not-allowed text-white py-3 rounded-xl shadow font-semibold text-lg transition flex items-center justify-center gap-2"
               >
-                <Check className="w-5 h-5" /> Approve Course
+                <Check className="w-5 h-5" /> {actionLoading === selectedCourse._id ? 'Processing...' : 'Approve Course'}
               </button>
               <button
-                onClick={() => handleDecline(selectedCourse.id)}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-xl shadow font-semibold text-lg transition flex items-center justify-center gap-2"
+                onClick={() => handleDecline(selectedCourse._id)}
+                disabled={actionLoading === selectedCourse._id}
+                className="flex-1 bg-red-500 hover:bg-red-600 disabled:bg-red-400 disabled:cursor-not-allowed text-white py-3 rounded-xl shadow font-semibold text-lg transition flex items-center justify-center gap-2"
               >
-                <X className="w-5 h-5" /> Decline Course
+                <X className="w-5 h-5" /> {actionLoading === selectedCourse._id ? 'Processing...' : 'Decline Course'}
               </button>
             </div>
           </div>

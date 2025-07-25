@@ -1,47 +1,139 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, Tag, Calendar, Percent, BookOpen } from "lucide-react";
+import { Plus, Trash2, Tag, Calendar, Percent, BookOpen, AlertCircle, Loader2 } from "lucide-react";
+import axios from "axios";
+import { API_ENDPOINTS } from "@/config/api";
 
 export default function Tools() {
   const [discounts, setDiscounts] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [code, setCode] = useState("");
   const [amount, setAmount] = useState("");
   const [course, setCourse] = useState("");
+  const [description, setDescription] = useState("");
+  const [validFrom, setValidFrom] = useState("");
+  const [validUntil, setValidUntil] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [fetchingData, setFetchingData] = useState(true);
 
-  // Example: Pretend you have these courses — replace with actual API
-  const courses = [
-    { id: "1", title: "React for Beginners" },
-    { id: "2", title: "Design Fundamentals" },
-    { id: "3", title: "Advanced JavaScript" },
-    { id: "4", title: "UI/UX Design Masterclass" },
-  ];
+  useEffect(() => {
+    fetchDiscounts();
+    fetchCourses();
+  }, []);
 
-  function handleCreateDiscount(e) {
+  const fetchDiscounts = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(API_ENDPOINTS.DISCOUNTS.BASE, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDiscounts(response.data.discounts || []);
+    } catch (error) {
+      console.error('Error fetching discounts:', error);
+      setError('Failed to load discounts');
+    } finally {
+      setFetchingData(false);
+    }
+  };
+
+  const fetchCourses = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(API_ENDPOINTS.ADMIN.ALL_COURSES, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCourses(response.data.courses || []);
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+    }
+  };
+
+  const handleCreateDiscount = async (e) => {
     e.preventDefault();
-    if (!code || !amount || !course) {
-      setMessage("Please fill all fields.");
+    if (!code || !amount || !description || !validFrom || !validUntil) {
+      setMessage("Please fill all required fields.");
       return;
     }
-    setDiscounts([
-      ...discounts,
-      {
-        code: code.trim(),
-        amount: Number(amount),
-        courseId: course,
-        courseTitle: courses.find(c => c.id === course)?.title || "",
-        created: new Date().toLocaleString(),
-      },
-    ]);
-    setCode("");
-    setAmount("");
-    setCourse("");
-    setMessage("Discount created successfully!");
-    setTimeout(() => setMessage(""), 3000);
-  }
 
-  function handleDeleteDiscount(idx) {
-    setDiscounts(discounts.filter((_, i) => i !== idx));
+    setLoading(true);
+    setMessage("");
+
+    try {
+      const token = localStorage.getItem('token');
+      const discountData = {
+        code: code.trim().toUpperCase(),
+        description,
+        type: 'percentage',
+        value: Number(amount),
+        validFrom,
+        validUntil,
+        applicableToAll: !course,
+        applicableCourses: course ? [course] : []
+      };
+
+      await axios.post(API_ENDPOINTS.DISCOUNTS.BASE, discountData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setCode("");
+      setAmount("");
+      setCourse("");
+      setDescription("");
+      setValidFrom("");
+      setValidUntil("");
+      setMessage("Discount created successfully!");
+      setTimeout(() => setMessage(""), 3000);
+      
+      fetchDiscounts();
+    } catch (error) {
+      console.error('Error creating discount:', error);
+      setMessage(error.response?.data?.message || "Failed to create discount");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteDiscount = async (discountId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(API_ENDPOINTS.DISCOUNTS.BY_ID(discountId), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      fetchDiscounts();
+      setMessage("Discount deleted successfully!");
+      setTimeout(() => setMessage(""), 3000);
+    } catch (error) {
+      console.error('Error deleting discount:', error);
+      setMessage("Failed to delete discount");
+    }
+  };
+
+  const toggleDiscountStatus = async (discountId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.patch(API_ENDPOINTS.DISCOUNTS.TOGGLE_STATUS(discountId), {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      fetchDiscounts();
+    } catch (error) {
+      console.error('Error toggling discount status:', error);
+      setMessage("Failed to update discount status");
+    }
+  };
+
+  if (fetchingData) {
+    return (
+      <div className="w-full min-h-screen py-8 px-4 sm:px-8 bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+          <p className="text-gray-600">Loading discount management...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -72,7 +164,7 @@ export default function Tools() {
                 <form onSubmit={handleCreateDiscount} className="space-y-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Discount Code
+                      Discount Code *
                     </label>
                     <div className="relative">
                       <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -82,13 +174,14 @@ export default function Tools() {
                         value={code}
                         onChange={e => setCode(e.target.value.toUpperCase())}
                         maxLength={18}
+                        required
                       />
                     </div>
                   </div>
                   
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Discount Amount (%)
+                      Discount Amount (%) *
                     </label>
                     <div className="relative">
                       <Percent className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -100,13 +193,63 @@ export default function Tools() {
                         min={1}
                         max={100}
                         onChange={e => setAmount(e.target.value)}
+                        required
                       />
                     </div>
                   </div>
                   
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Select Course
+                      Description *
+                    </label>
+                    <div className="relative">
+                      <AlertCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+                        placeholder="e.g. 20% off for new students"
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Valid From *
+                      </label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          type="datetime-local"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+                          value={validFrom}
+                          onChange={e => setValidFrom(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Valid Until *
+                      </label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          type="datetime-local"
+                          className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition bg-white"
+                          value={validUntil}
+                          onChange={e => setValidUntil(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Select Course (Optional)
                     </label>
                     <div className="relative">
                       <BookOpen className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -115,9 +258,9 @@ export default function Tools() {
                         value={course}
                         onChange={e => setCourse(e.target.value)}
                       >
-                        <option value="">Choose a course</option>
+                        <option value="">Apply to all courses</option>
                         {courses.map(c => (
-                          <option key={c.id} value={c.id}>{c.title}</option>
+                          <option key={c._id} value={c._id}>{c.title}</option>
                         ))}
                       </select>
                     </div>
@@ -125,9 +268,11 @@ export default function Tools() {
                   
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    Create Discount Code
+                    {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {loading ? 'Creating...' : 'Create Discount Code'}
                   </button>
                   
                   {message && (
@@ -167,9 +312,9 @@ export default function Tools() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {discounts.map((discount, idx) => (
+                    {discounts.map((discount) => (
                       <div
-                        key={idx}
+                        key={discount._id}
                         className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 rounded-2xl p-6 hover:shadow-md transition-shadow"
                       >
                         <div className="flex items-center justify-between">
@@ -179,27 +324,62 @@ export default function Tools() {
                                 {discount.code}
                               </div>
                               <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold text-lg">
-                                {discount.amount}% OFF
+                                {discount.value}% OFF
+                              </div>
+                              <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                discount.isActive 
+                                  ? 'bg-green-100 text-green-700' 
+                                  : 'bg-gray-100 text-gray-600'
+                              }`}>
+                                {discount.isActive ? 'Active' : 'Inactive'}
                               </div>
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-600">
-                              <div className="flex items-center gap-1">
-                                <BookOpen className="w-4 h-4" />
-                                <span className="font-medium">{discount.courseTitle}</span>
+                            <div className="space-y-2 text-sm text-gray-600">
+                              <div>
+                                <span className="font-medium">Description:</span> {discount.description}
                               </div>
-                              <div className="flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
-                                <span>Created: {discount.created}</span>
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-1">
+                                  <BookOpen className="w-4 h-4" />
+                                  <span className="font-medium">
+                                    {discount.applicableToAll 
+                                      ? "All Courses" 
+                                      : discount.applicableCourses?.length > 0 
+                                        ? courses.find(c => c._id === discount.applicableCourses[0])?.title || "Unknown Course"
+                                        : "All Courses"
+                                    }
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-4 h-4" />
+                                  <span>Valid: {new Date(discount.validFrom).toLocaleDateString()} - {new Date(discount.validUntil).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Used: {discount.usedCount || 0} times
                               </div>
                             </div>
                           </div>
-                          <button
-                            onClick={() => handleDeleteDiscount(idx)}
-                            className="bg-red-50 hover:bg-red-100 text-red-600 p-3 rounded-xl transition-colors group"
-                            title="Delete discount"
-                          >
-                            <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => toggleDiscountStatus(discount._id)}
+                              className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                                discount.isActive
+                                  ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+                              }`}
+                              title={discount.isActive ? 'Deactivate' : 'Activate'}
+                            >
+                              {discount.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDiscount(discount._id)}
+                              className="bg-red-50 hover:bg-red-100 text-red-600 p-3 rounded-xl transition-colors group"
+                              title="Delete discount"
+                            >
+                              <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
