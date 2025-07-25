@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import mentaroLogo from "./../../assets/images/mentarologo.png";
 
 // Simple Avatar components
@@ -88,6 +89,7 @@ const MentaroNavbar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout, isAuthenticated } = useAuth();
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -107,13 +109,14 @@ const MentaroNavbar = () => {
   };
 
   const handleLogout = () => {
-    // Add any logout logic here (clear tokens, localStorage, etc.)
-    console.log("User logged out");
-    // Navigate to home page
+    logout();
     navigate("/");
   };
 
-  const user = true;
+  const getUserInitials = (username) => {
+    if (!username) return "U";
+    return username.charAt(0).toUpperCase();
+  };
 
   return (
     <>
@@ -145,7 +148,7 @@ const MentaroNavbar = () => {
         </form>
 
         {/* Navigation Items */}
-        {user ? (
+        {isAuthenticated() ? (
           <div className="flex items-center space-x-6">
             <a href="#" className="text-gray-700 hover:text-blue-600">
               Become Instructor
@@ -153,13 +156,12 @@ const MentaroNavbar = () => {
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <Avatar>
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>CN</AvatarFallback>
+                  <AvatarFallback>{getUserInitials(user?.username)}</AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuLabel>Username</DropdownMenuLabel>
-                <DropdownMenuLabel>useremail@gmail.com</DropdownMenuLabel>
+                <DropdownMenuLabel>{user?.username || "User"}</DropdownMenuLabel>
+                <DropdownMenuLabel>{user?.email || "user@example.com"}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Link to="/my-courses">My Courses</Link>
