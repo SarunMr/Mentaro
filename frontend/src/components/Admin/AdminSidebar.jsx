@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   CheckCheck,
   Settings,
@@ -8,7 +8,12 @@ import {
   X,
   LayoutDashboard,
   DollarSign,
+  LogOut,
+  Tag,
+  Users,
+  GraduationCap,
 } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 import justLogo from "../../assets/images/justLogo.png";
 
@@ -16,12 +21,29 @@ const Sidebar = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   const navigationItems = [
     {
       icon: <LayoutDashboard className="h-5 w-5" />,
       text: "Dashboard",
       path: "/admin/dashboard",
+    },
+    {
+      icon: <Users className="h-5 w-5" />,
+      text: "Users",
+      path: "/admin/users",
+    },
+    {
+      icon: <GraduationCap className="h-5 w-5" />,
+      text: "Instructors",
+      path: "/admin/instructors",
     },
     {
       icon: <CheckCheck className="h-5 w-5" />,
@@ -32,6 +54,11 @@ const Sidebar = () => {
       icon: <DollarSign className="h-5 w-5" />,
       text: "Revenue",
       path: "/admin/revenue",
+    },
+    {
+      icon: <Tag className="h-5 w-5" />,
+      text: "Discounts",
+      path: "/admin/discounts",
     },
     {
       icon: <Settings className="h-5 w-5" />,
@@ -123,6 +150,19 @@ const Sidebar = () => {
               />
             ))}
           </ul>
+        </div>
+
+        {/* Logout Button */}
+        <div className="p-2 border-t border-gray-700">
+          <button
+            onClick={handleLogout}
+            className={`flex ${isSidebarExpanded ? "flex-row" : "flex-col"} items-center ${
+              isSidebarExpanded ? "" : "justify-center"
+            } p-2 rounded-md transition-colors w-full hover:bg-gray-700 text-red-400 hover:text-red-300`}
+          >
+            <LogOut className="h-5 w-5" />
+            {isSidebarExpanded && <span className="ml-3">Logout</span>}
+          </button>
         </div>
       </div>
     </>
