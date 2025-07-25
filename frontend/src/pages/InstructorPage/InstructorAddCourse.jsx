@@ -4,6 +4,8 @@ import {
   BookOpen, Plus, Video, FileText, Trash2, Save, X, UploadCloud, 
   Image, DollarSign, Clock, Target, CheckCircle
 } from "lucide-react";
+import { courseAPI, uploadAPI } from "../../utils/apiClient";
+import toast from "react-hot-toast";
 
 const categories = [
   "programming", "design", "business", "marketing", "photography", "music", "other",
@@ -14,7 +16,7 @@ export default function InstructorAddCoursePage() {
   const [activeTab, setActiveTab] = useState("basic");
   const [newCourse, setNewCourse] = useState({
     title: "", description: "", category: "", level: "",
-    price: "", originalPrice: "", thumbnail: null,
+    price: "", originalPrice: "", thumbnail: null, previewVideo: null,
     requirements: [""], objectives: [""],
     chapters: [{
       id: Date.now(),
@@ -28,7 +30,6 @@ export default function InstructorAddCoursePage() {
         description: ""
       }]
     }],
-    notes: [],
   });
 
   // ----- Input Handlers -----
@@ -91,30 +92,15 @@ export default function InstructorAddCoursePage() {
           : ch),
     }));
 
-  // ----- Notes Handlers -----
-  const handleNotesUpload = (e) => {
-    const files = Array.from(e.target.files);
-    setNewCourse((prev) => ({
-      ...prev,
-      notes: [...prev.notes, ...files],
-    }));
-  };
-  const removeNote = (idx) =>
-    setNewCourse((prev) => ({
-      ...prev,
-      notes: prev.notes.filter((_, i) => i !== idx),
-    }));
-
   // Refs for file inputs
   const lessonVideoInputs = useRef({});
-  const noteUploadInput = useRef(null);
   const thumbnailInputRef = useRef(null);
+  const previewVideoInputRef = useRef(null);
 
   // Tabs configuration
   const tabs = [
     { label: "Basic Info", key: "basic", icon: BookOpen },
     { label: "Curriculum", key: "curriculum", icon: Video },
-    { label: "Notes", key: "notes", icon: FileText },
   ];
 
   const nextTab = () => {
@@ -125,9 +111,152 @@ export default function InstructorAddCoursePage() {
     const idx = tabs.findIndex((t) => t.key === activeTab);
     if (idx > 0) setActiveTab(tabs[idx - 1].key);
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Course submitted!");
+    
+    // Validate required fields
+    if (!newCourse.title || !newCourse.description || !newCourse.category || !newCourse.level || !newCourse.price) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    // Validate chapters and lessons
+    if (newCourse.chapters.length === 0) {
+      toast.error("Please add at least one chapter");
+      return;
+    }
+    
+    for (let chapter of newCourse.chapters) {
+      if (!chapter.title) {
+        toast.error("Please provide titles for all chapters");
+        return;
+      }
+      if (chapter.lessons.length === 0) {
+        toast.error("Each chapter must have at least one lesson");
+        return;
+      }
+      for (let lesson of chapter.lessons) {
+        if (!lesson.title || !lesson.duration) {
+          toast.error("Please provide title and duration for all lessons");
+          return;
+        }
+      }
+    }
+    
+    try {
+      toast.loading("Creating course...");
+      
+      // Upload thumbnail if provided
+      let thumbnailUrl = '';
+      if (newCourse.thumbnail) {
+        try {
+          const thumbnailResponse = await uploadAPI.uploadThumbnail(newCourse.thumbnail);
+          thumbnailUrl = thumbnailResponse.data.data.url;
+        } catch (error) {
+          console.error('Thumbnail upload failed:', error);
+          toast.error('Failed to upload thumbnail');
+          return;
+        }
+      }
+
+      // Upload preview video if provided
+      let previewVideoUrl = '';
+      if (newCourse.previewVideo) {
+        try {
+          const previewVideoResponse = await uploadAPI.uploadVideo(newCourse.previewVideo);
+          previewVideoUrl = previewVideoResponse.data.data.url;
+        } catch (error) {
+          console.error('Preview video upload failed:', error);
+          toast.error('Failed to upload preview video');
+          return;
+        }
+      }
+      
+      // Upload videos for lessons if provided
+      const updatedChapters = await Promise.all(
+        newCourse.chapters.map(async (chapter) => {
+          const updatedLessons = await Promise.all(
+            chapter.lessons.map(async (lesson) => {
+              let videoUrl = lesson.videoUrl || '';
+              
+              if (lesson.videoFile) {
+                try {
+                  const videoResponse = await uploadAPI.uploadVideo(lesson.videoFile);
+                  videoUrl = videoResponse.data.data.url;
+                } catch (error) {
+                  console.error('Video upload failed for lesson:', lesson.title, error);
+                  toast.error(`Failed to upload video for lesson: ${lesson.title}`);
+                  throw error;
+                }
+              }
+              
+              return {
+                title: lesson.title,
+                description: lesson.description || '',
+                duration: parseInt(lesson.duration) || 0,
+                videoUrl: videoUrl,
+                isPreview: lesson.isPreview || false,
+                resources: lesson.resources || []
+              };
+            })
+          );
+          
+          return {
+            title: chapter.title,
+            description: chapter.description || '',
+            lessons: updatedLessons
+          };
+        })
+      );
+      
+      // Prepare course data for API
+      const courseData = {
+        title: newCourse.title,
+        description: newCourse.description,
+        category: newCourse.category,
+        level: newCourse.level,
+        price: parseFloat(newCourse.price),
+        originalPrice: newCourse.originalPrice ? parseFloat(newCourse.originalPrice) : parseFloat(newCourse.price),
+        thumbnail: thumbnailUrl,
+        previewVideo: previewVideoUrl,
+        requirements: newCourse.requirements.filter(req => req.trim() !== ""),
+        objectives: newCourse.objectives.filter(obj => obj.trim() !== ""),
+        chapters: updatedChapters
+      };
+      
+      const response = await courseAPI.createCourse(courseData);
+      
+      if (response.data) {
+        toast.dismiss();
+        toast.success("Course created successfully!");
+        
+        // Reset form
+        setNewCourse({
+          title: "", description: "", category: "", level: "",
+          price: "", originalPrice: "", thumbnail: null, previewVideo: null,
+          requirements: [""], objectives: [""], 
+          chapters: [{
+            id: Date.now(),
+            title: "Introduction",
+            lessons: [{
+              id: Date.now() + 1,
+              title: "",
+              duration: "",
+              videoUrl: "",
+              videoFile: null,
+              description: ""
+            }]
+          }],
+        });
+        
+        // Switch to basic tab
+        setActiveTab("basic");
+      }
+    } catch (error) {
+      toast.dismiss();
+      console.error("Error creating course:", error);
+      toast.error(error.response?.data?.message || "Failed to create course");
+    }
   };
 
   return (
@@ -190,32 +319,65 @@ export default function InstructorAddCoursePage() {
                   <p className="text-gray-600">Fill in the basic details about your course</p>
                 </div>
 
-                {/* Thumbnail Upload */}
-                <div className="flex justify-center mb-6">
-                  <div
-                    className="w-48 h-32 bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => thumbnailInputRef.current?.click()}
-                  >
-                    {newCourse.thumbnail ? (
-                      <img
-                        src={URL.createObjectURL(newCourse.thumbnail)}
-                        alt="Course thumbnail"
-                        className="w-full h-full object-cover rounded-xl"
-                      />
-                    ) : (
-                      <div className="text-center">
-                        <Image className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">Upload Thumbnail</p>
-                      </div>
-                    )}
+                {/* Thumbnail and Preview Video Upload */}
+                <div className="flex justify-center gap-6 mb-6">
+                  {/* Thumbnail Upload */}
+                  <div className="flex flex-col items-center">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Course Thumbnail *</label>
+                    <div
+                      className="w-48 h-32 bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => thumbnailInputRef.current?.click()}
+                    >
+                      {newCourse.thumbnail ? (
+                        <img
+                          src={URL.createObjectURL(newCourse.thumbnail)}
+                          alt="Course thumbnail"
+                          className="w-full h-full object-cover rounded-xl"
+                        />
+                      ) : (
+                        <div className="text-center">
+                          <Image className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">Upload Thumbnail</p>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      ref={thumbnailInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleFileChange(e, "thumbnail")}
+                      className="hidden"
+                    />
                   </div>
-                  <input
-                    ref={thumbnailInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(e, "thumbnail")}
-                    className="hidden"
-                  />
+
+                  {/* Preview Video Upload */}
+                  <div className="flex flex-col items-center">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Preview Video</label>
+                    <div
+                      className="w-48 h-32 bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => previewVideoInputRef.current?.click()}
+                    >
+                      {newCourse.previewVideo ? (
+                        <div className="text-center">
+                          <Video className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                          <p className="text-sm text-gray-700 font-medium">{newCourse.previewVideo.name}</p>
+                          <p className="text-xs text-gray-500">Click to change</p>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <Video className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">Upload Preview Video</p>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      ref={previewVideoInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={(e) => handleFileChange(e, "previewVideo")}
+                      className="hidden"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -488,57 +650,7 @@ export default function InstructorAddCoursePage() {
               </div>
             )}
 
-            {/* Notes Tab */}
-            {activeTab === "notes" && (
-              <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Course Resources</h2>
-                  <p className="text-gray-600">Upload additional materials for your students</p>
-                </div>
 
-                <div
-                  className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center cursor-pointer hover:border-green-400 transition-colors"
-                  onClick={() => noteUploadInput.current?.click()}
-                >
-                  <UploadCloud className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Course Materials</h3>
-                  <p className="text-gray-600">Click to upload PDFs, documents, and other resources</p>
-                  <input
-                    ref={noteUploadInput}
-                    type="file"
-                    multiple
-                    onChange={handleNotesUpload}
-                    className="hidden"
-                  />
-                </div>
-
-                {newCourse.notes.length > 0 && (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-gray-900">Uploaded Files</h3>
-                    <div className="space-y-3">
-                      {newCourse.notes.map((file, idx) => (
-                        <div key={idx} className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4">
-                          <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-green-600" />
-                            <div>
-                              <p className="font-medium text-gray-900">{file.name}</p>
-                              <p className="text-sm text-gray-600">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeNote(idx)}
-                            className="px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Navigation */}
             <div className="flex justify-between items-center pt-6 border-t border-gray-200">
@@ -555,7 +667,7 @@ export default function InstructorAddCoursePage() {
                 Step {tabs.findIndex(t => t.key === activeTab) + 1} of {tabs.length}
               </div>
 
-              {activeTab !== "notes" ? (
+              {activeTab !== "curriculum" ? (
                 <button
                   type="button"
                   onClick={nextTab}

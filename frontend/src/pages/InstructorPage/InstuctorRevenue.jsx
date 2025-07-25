@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   DollarSign,
   TrendingUp,
@@ -9,47 +9,67 @@ import {
   Eye,
   BarChart3
 } from 'lucide-react';
+import { instructorAPI } from '../../utils/apiClient';
 
 function InstructorRevenue() {
   const [selectedPeriod, setSelectedPeriod] = useState('7d');
   const [selectedMetric, setSelectedMetric] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // State for real data
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [revenueData, setRevenueData] = useState([]);
+  const [topCourses, setTopCourses] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
 
-  // Mock data - replace with real data from your API
-  const revenueStats = {
-    totalRevenue: 45678,
-    monthlyRevenue: 12450,
-    weeklyRevenue: 3250,
-    dailyRevenue: 520,
-    growth: 18.5,
-    totalCourses: 89,
-    activeCourses: 76,
-    totalStudents: 1247
-  };
-
-  const revenueData = [
-    { month: 'Jan', revenue: 8500, courses: 12 },
-    { month: 'Feb', revenue: 9200, courses: 15 },
-    { month: 'Mar', revenue: 11800, courses: 18 },
-    { month: 'Apr', revenue: 10500, courses: 16 },
-    { month: 'May', revenue: 13200, courses: 22 },
-    { month: 'Jun', revenue: 12450, courses: 20 }
-  ];
-
-  const topCourses = [
-    { name: 'React for Beginners', revenue: 3450, students: 156, price: 49 },
-    { name: 'Advanced JavaScript', revenue: 2890, students: 134, price: 79 },
-    { name: 'UI/UX Design Masterclass', revenue: 2340, students: 98, price: 99 },
-    { name: 'Python Programming', revenue: 1980, students: 87, price: 69 },
-    { name: 'Web Development Bootcamp', revenue: 1650, students: 73, price: 89 }
-  ];
-
-  const recentTransactions = [
-    { id: 1, course: 'React for Beginners', student: 'John Doe', amount: 49, date: '2024-01-15', status: 'completed' },
-    { id: 2, course: 'Advanced JavaScript', student: 'Jane Smith', amount: 79, date: '2024-01-15', status: 'completed' },
-    { id: 3, course: 'UI/UX Design', student: 'Mike Johnson', amount: 99, date: '2024-01-14', status: 'pending' },
-    { id: 4, course: 'Python Programming', student: 'Sarah Wilson', amount: 69, date: '2024-01-14', status: 'completed' },
-    { id: 5, course: 'Web Development', student: 'Tom Brown', amount: 89, date: '2024-01-13', status: 'completed' }
-  ];
+  // Fetch data from APIs
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Fetch all required data
+        const [dashboardResponse, revenueResponse, topCoursesResponse, transactionsResponse] = await Promise.all([
+          instructorAPI.getDashboard(),
+          instructorAPI.getRevenue(),
+          instructorAPI.getTopCourses(),
+          instructorAPI.getRecentTransactions(10)
+        ]);
+        
+        setDashboardStats(dashboardResponse.data.data);
+        
+        // Transform revenue data for chart
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const transformedRevenueData = revenueResponse.data.data.months.map(monthData => ({
+          month: monthNames[monthData.month - 1],
+          revenue: monthData.revenue,
+          courses: monthData.enrollments
+        }));
+        setRevenueData(transformedRevenueData);
+        
+        // Transform top courses data
+        const transformedTopCourses = topCoursesResponse.data.data.map(course => ({
+          name: course.title,
+          revenue: course.revenue || 0,
+          students: course.enrollmentCount || 0,
+          price: course.price || 0
+        }));
+        setTopCourses(transformedTopCourses);
+        
+        setRecentTransactions(transactionsResponse.data.data);
+        
+      } catch (err) {
+        console.error('Error fetching instructor revenue data:', err);
+        setError('Failed to load revenue data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -57,6 +77,46 @@ function InstructorRevenue() {
       currency: 'USD'
     }).format(amount);
   };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full min-h-screen bg-gray-50 p-4 sm:p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading revenue data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full min-h-screen bg-gray-50 p-4 sm:p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 mb-4">
+            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full min-h-screen bg-gray-50 p-4 sm:p-8">
@@ -84,11 +144,11 @@ function InstructorRevenue() {
               </div>
               <div className="flex items-center gap-1 text-green-600">
                 <TrendingUp className="w-4 h-4" />
-                <span className="text-sm font-medium">+{revenueStats.growth}%</span>
+                <span className="text-sm font-medium">Total</span>
               </div>
             </div>
             <div className="text-2xl font-bold text-gray-900 mb-1">
-              {formatCurrency(revenueStats.totalRevenue)}
+              {formatCurrency(dashboardStats?.totalRevenue || 0)}
             </div>
             <div className="text-sm text-gray-600">Total Revenue</div>
           </div>
@@ -100,11 +160,11 @@ function InstructorRevenue() {
               </div>
               <div className="flex items-center gap-1 text-blue-600">
                 <TrendingUp className="w-4 h-4" />
-                <span className="text-sm font-medium">+12.3%</span>
+                <span className="text-sm font-medium">Current</span>
               </div>
             </div>
             <div className="text-2xl font-bold text-gray-900 mb-1">
-              {formatCurrency(revenueStats.monthlyRevenue)}
+              {formatCurrency(dashboardStats?.monthlyRevenue || 0)}
             </div>
             <div className="text-sm text-gray-600">This Month</div>
           </div>
@@ -115,11 +175,11 @@ function InstructorRevenue() {
                 <BookOpen className="w-6 h-6 text-purple-600" />
               </div>
               <div className="text-sm text-gray-600">
-                {revenueStats.activeCourses} active
+                {dashboardStats?.publishedCourses || 0} published
               </div>
             </div>
             <div className="text-2xl font-bold text-gray-900 mb-1">
-              {revenueStats.totalCourses}
+              {dashboardStats?.totalCourses || 0}
             </div>
             <div className="text-sm text-gray-600">Total Courses</div>
           </div>
@@ -131,11 +191,11 @@ function InstructorRevenue() {
               </div>
               <div className="flex items-center gap-1 text-orange-600">
                 <TrendingUp className="w-4 h-4" />
-                <span className="text-sm font-medium">+8.1%</span>
+                <span className="text-sm font-medium">{dashboardStats?.completionRate || 0}%</span>
               </div>
             </div>
             <div className="text-2xl font-bold text-gray-900 mb-1">
-              {revenueStats.totalStudents.toLocaleString()}
+              {(dashboardStats?.totalStudents || 0).toLocaleString()}
             </div>
             <div className="text-sm text-gray-600">Total Students</div>
           </div>
@@ -153,16 +213,29 @@ function InstructorRevenue() {
               </div>
             </div>
             <div className="h-64 flex items-end justify-between gap-2">
-              {revenueData.map((data, index) => (
-                <div key={index} className="flex flex-col items-center flex-1">
-                  <div
-                    className="w-full bg-gradient-to-t from-green-500 to-green-400 rounded-t-lg mb-2 hover:from-green-600 hover:to-green-500 transition-colors cursor-pointer"
-                    style={{ height: `${(data.revenue / 15000) * 100}%`, minHeight: '20px' }}
-                    title={`${data.month}: ${formatCurrency(data.revenue)}`}
-                  />
-                  <span className="text-xs text-gray-600 font-medium">{data.month}</span>
+              {revenueData && revenueData.length > 0 ? (
+                revenueData.map((data, index) => {
+                  const maxRevenue = Math.max(...revenueData.map(d => d.revenue || 0));
+                  const height = maxRevenue > 0 ? (data.revenue / maxRevenue) * 100 : 0;
+                  return (
+                    <div key={index} className="flex flex-col items-center flex-1">
+                      <div
+                        className="w-full bg-gradient-to-t from-green-500 to-green-400 rounded-t-lg mb-2 hover:from-green-600 hover:to-green-500 transition-colors cursor-pointer"
+                        style={{ height: `${height}%`, minHeight: '20px' }}
+                        title={`${data.month}: ${formatCurrency(data.revenue || 0)}`}
+                      />
+                      <span className="text-xs text-gray-600 font-medium">{data.month}</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="flex items-center justify-center w-full h-full text-gray-500">
+                  <div className="text-center">
+                    <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No revenue data available</p>
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
@@ -175,23 +248,30 @@ function InstructorRevenue() {
               </button>
             </div>
             <div className="space-y-4">
-              {topCourses.map((course, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <span className="text-green-600 font-bold text-sm">#{index + 1}</span>
+              {topCourses && topCourses.length > 0 ? (
+                topCourses.map((course, index) => (
+                  <div key={course._id || index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center text-white font-bold">
+                        #{index + 1}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900">{course.title || course.name}</h4>
+                        <p className="text-sm text-gray-600">{course.enrollmentCount || course.students} students</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{course.name}</p>
-                      <p className="text-sm text-gray-600">{course.students} students</p>
+                    <div className="text-right">
+                      <div className="font-bold text-gray-900">{formatCurrency(course.totalRevenue || course.revenue || 0)}</div>
+                      <div className="text-sm text-gray-600">{course.enrollmentCount || course.students} enrollments</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-gray-900">{formatCurrency(course.revenue)}</p>
-                    <p className="text-sm text-gray-600">{formatCurrency(course.price)}/course</p>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No course data available</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -225,36 +305,45 @@ function InstructorRevenue() {
                 </tr>
               </thead>
               <tbody>
-                {recentTransactions.map((transaction) => (
-                  <tr key={transaction.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="p-4">
-                      <div className="font-medium text-gray-900">{transaction.course}</div>
-                    </td>
-                    <td className="p-4">
-                      <div className="text-gray-900">{transaction.student}</div>
-                    </td>
-                    <td className="p-4">
-                      <div className="font-medium text-gray-900">{formatCurrency(transaction.amount)}</div>
-                    </td>
-                    <td className="p-4">
-                      <div className="text-gray-600">{transaction.date}</div>
-                    </td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        transaction.status === 'completed' 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}>
-                        {transaction.status}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                        <Eye className="w-4 h-4" />
-                      </button>
+                {recentTransactions && recentTransactions.length > 0 ? (
+                  recentTransactions.map((transaction) => (
+                    <tr key={transaction._id} className="border-b border-gray-50 hover:bg-gray-50">
+                      <td className="p-4">
+                        <div className="font-medium text-gray-900">{transaction.course}</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-gray-900">{transaction.student}</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="font-medium text-gray-900">{formatCurrency(transaction.amount)}</div>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-gray-600">{formatDate(transaction.date)}</div>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          transaction.status === 'completed' 
+                            ? 'bg-green-100 text-green-700' 
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {transaction.status}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="p-8 text-center text-gray-500">
+                      <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No recent transactions</p>
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
